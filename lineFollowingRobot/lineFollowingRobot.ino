@@ -13,8 +13,17 @@
 
 #include <QTRSensors.h>
 
-VAR_HPP_::motor left;
-VAR_HPP_::motor right;
+// Motors //////////////////////////////////////////////////////////////////////////////////////////////////
+const short leftWheelPin1 = 4;
+const short leftWheelPin2 = 5;
+const short leftPWMpin = 6;
+
+const short rightWheelPin1 = 7;
+const short rightWheelPin2 = 8;
+const short rightPWMpin = 9;
+
+VAR_HPP_::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
+VAR_HPP_::motor right(rightWheelPin1,rightWheelPin2,rightPWMpin);
 
 
 
@@ -22,10 +31,13 @@ VAR_HPP_::motor right;
 void setup() {
   // Motors 
   pinMode(leftWheelPin1, OUTPUT);
-  pinMode(rightWheelPin2, OUTPUT);
+  pinMode(leftWheelPin2, OUTPUT);
+  pinMode(leftPWMpin, OUTPUT);
 
   pinMode(rightWheelPin1, OUTPUT);
-  pinMode(leftWheelPin2, OUTPUT);
+  pinMode(rightWheelPin2, OUTPUT);
+  pinMode(rightPWMpin, OUTPUT);
+
 
   // QTR sensors 
   qtr.setTypeAnalog();
@@ -44,22 +56,11 @@ void setup() {
   // Call calibrate() 400 times to make calibration take about 10 seconds.
   for (uint16_t i = 0; i < 200; i++)
   {
-
-
-
-
-
-
-
-
-
-
-    
-    left(128,0);
-    right(0,128);
+    left.drive(50);
+    right.drive(-50);
     qtr.calibrate();
-    left(0,128);
-    right(128,0);
+    left.drive(-50);
+    right.drive(50);
     qtr.calibrate();
   }
   digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration

@@ -1,39 +1,49 @@
+#include <cmath>
+#include "esp32-hal-gpio.h"
+#include "esp32-hal.h"
 // PID loop controls
 #ifndef VAR_HPP_
 #define VAR_HPP_
-#include <QTRSensors.h>
-
-
-
-// QT sensors setup //////////////////////////////////////////////////////////////////////////////////////////////////
-QTRSensors qtr;
-const uint8_t SensorCount = 8;
-uint16_t sensorValues[SensorCount];
-uint16_t position;
-
-// Motors //////////////////////////////////////////////////////////////////////////////////////////////////
-const short leftWheelPin1 = 4;
-const short leftWheelPin2 = 5;
-
-const short rightWheelPin1 = 6;
-const short rightWheelPin2 = 7;
-
-// PID //////////////////////////////////////////////////////////////////////////////////////////////////
-const short kp = 50;
-const short kd = 70; // documenntation recommeds having kd higher than kp
-
-
 
 // Motor class //////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+PWM   in1    in2
+0     0       0     Coast
+0     1       1     brake
+1     0       0     Coast
+1     1       0     Forward
+1     0       1     Reverse
+1     1       1     brake
+
+*/
 class motor {// I'm too lazy to make an actual cpp file for this
 public:
-  void coast();
+  motor (const short& in1, const short& in2, const short& pwm){ in1_ = &in1; in2_ = &in2; pwm_ = &pwm; };
+  
+  void drive(int signal){// receives input -100 to 100 for motor speed (0 for coast, negative for reverse, and positive for forward)
+    if (signal < 0) // reverse
+      manual(signal, false, true);
+    else // forward
+      manual(signal, true, false); 
+  };
 
+  void manual(short signal, bool in1, bool in2){
+    short output;
+    signal = std::abs(signal);
+    if(signal > 100)
+      output = 255;
+    else
+      output = signal * .01 * 255;
+    analogWrite(*pwm_, output);
+    digitalWrite(*in1_, in1);
+    digitalWrite(*in2_, in2);
+  }
 
-
-
-
-}
+private: // pointers to const pin references
+  const short *pwm_;
+  const short *in1_;
+  const short *in2_;
+};
 
 
 
