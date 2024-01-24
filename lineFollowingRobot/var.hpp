@@ -24,6 +24,17 @@ const short kd = 70; // documenntation recommeds having kd higher than kp
 
 
 
+// Motor class //////////////////////////////////////////////////////////////////////////////////////////////////
+class motor {// I'm too lazy to make an actual cpp file for this
+public:
+  void coast();
+
+
+
+
+
+}
+
 
 
 #endif // VAR_HPP_

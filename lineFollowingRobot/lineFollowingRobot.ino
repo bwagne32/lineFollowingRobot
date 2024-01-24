@@ -13,6 +13,8 @@
 
 #include <QTRSensors.h>
 
+VAR_HPP_::motor left;
+VAR_HPP_::motor right;
 
 
 
@@ -20,9 +22,10 @@
 void setup() {
   // Motors 
   pinMode(leftWheelPin1, OUTPUT);
+  pinMode(rightWheelPin2, OUTPUT);
+
   pinMode(rightWheelPin1, OUTPUT);
   pinMode(leftWheelPin2, OUTPUT);
-  pinMode(rightWheelPin2, OUTPUT);
 
   // QTR sensors 
   qtr.setTypeAnalog();
@@ -41,6 +44,17 @@ void setup() {
   // Call calibrate() 400 times to make calibration take about 10 seconds.
   for (uint16_t i = 0; i < 200; i++)
   {
+
+
+
+
+
+
+
+
+
+
+    
     left(128,0);
     right(0,128);
     qtr.calibrate();
