@@ -18,7 +18,7 @@ const short kd = 0;
 
 /* Motor info
       Use drive(int signal)
-      // receives input -100 to 100 for motor speed (0 for coast, negative for reverse, and positive for forward)
+      // receives input -255 to 255 for motor speed (0 for coast, negative for reverse, and positive for forward)
 */
 
 void loop(){

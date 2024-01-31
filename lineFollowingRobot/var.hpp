@@ -20,7 +20,7 @@ class motor {// I'm too lazy to make an actual cpp file for this so it'll be som
 public:
   motor (const short& in1, const short& in2, const short& pwm){ in1_ = &in1; in2_ = &in2; pwm_ = &pwm; };
   
-  void drive(int signal){// receives input -100 to 100 for motor speed (0 for coast, negative for reverse, and positive for forward)
+  void drive(int signal){// receives input -255 to 255 for motor speed (0 for coast, negative for reverse, and positive for forward)
     if (signal < 0) // reverse
       manual(signal, false, true);
     else // forward
@@ -30,10 +30,10 @@ public:
   void manual(short signal, bool in1, bool in2){
     short output;
     signal = std::abs(signal);
-    if(signal > 100)
+    if(signal > 255)
       output = 255;
     else
-      output = signal * .01 * 255;
+      output = signal;
     analogWrite(*pwm_, output);
     digitalWrite(*in1_, in1);
     digitalWrite(*in2_, in2);
