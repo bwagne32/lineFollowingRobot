@@ -14,17 +14,20 @@
 #include <QTRSensors.h>
 
 // Motors //////////////////////////////////////////////////////////////////////////////////////////////////
-const short leftWheelPin1 = 4;
-const short leftWheelPin2 = 5;
-const short leftPWMpin = 6;
+const short leftWheelPin1 = 7;
+const short leftWheelPin2 = 6;
+const short leftPWMpin = 5;
 
-const short rightWheelPin1 = 7;
-const short rightWheelPin2 = 8;
-const short rightPWMpin = 9;
+const short rightWheelPin1 = 4;
+const short rightWheelPin2 = 3;
+const short rightPWMpin = 2;
 
 VAR_HPP_::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
 VAR_HPP_::motor right(rightWheelPin1,rightWheelPin2,rightPWMpin);
 
+// Other pins //////////////////////////////////////////////////////////////////////////////////////////////////
+const short fanPin = 12;
+const short fanEnablePin = 8;
 
 
 
@@ -37,6 +40,9 @@ void setup() {
   pinMode(rightWheelPin1, OUTPUT);
   pinMode(rightWheelPin2, OUTPUT);
   pinMode(rightPWMpin, OUTPUT);
+
+  pinMode(fanPin, OUTPUT);
+  pinMode(fanEnablePin, OUTPUT);
 
 
   // QTR sensors 
@@ -63,6 +69,10 @@ void setup() {
     right.drive(50);
     qtr.calibrate();
   }
+
+  left.drive(0);
+  right.drive(0);
+
   digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
 
@@ -88,10 +98,6 @@ void setup() {
 */
 
 
-
-
-
-
  /*
   xTaskCreatePinnedToCore(
     TaskBlink, "Task Blink"  // A name just for humans
@@ -107,9 +113,9 @@ void setup() {
     CORE_0  // Core on which the task will run
   );
 */
-
-  xTaskCreatePinnedToCore(car, "PID control", 2048, nullptr, 2, NULL, core0);
+  digitalWrite(fanEnablePin, HIGH);
   xTaskCreatePinnedToCore(comms, "Motor control", 2048, nullptr, 2, NULL, core1);
+  xTaskCreatePinnedToCore(car, "PID control", 2048, nullptr, 2, NULL, core0);
 }
 
 
@@ -119,23 +125,18 @@ void loop() { // unused since each core will be operating indepently
 
 // Core loops //////////////////////////////////////////////////////////////////////////////////////////////////
 void car(void *pvParameters){ // reads inputs, calculates PD control, and sends motor signals
-  while(1){
-
-
-  }
+  PID_HPP_::loop();
 }
 
 
 void comms(void *pvParameters) { // sends communication info over BLE
-  while(1){
-
-
-
-
-  }
+    COMMS_HPP_::loop();
 }
 
-
+// This function will probably need reworked
+void fan(short pwm){// set fan speed
+  analogWrite(fanPin, pwm);
+}
 
 
 

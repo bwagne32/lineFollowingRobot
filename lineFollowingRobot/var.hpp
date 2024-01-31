@@ -16,7 +16,7 @@ PWM   in1    in2
 1     1       1     brake
 
 */
-class motor {// I'm too lazy to make an actual cpp file for this
+class motor {// I'm too lazy to make an actual cpp file for this so it'll be somewhat cramped
 public:
   motor (const short& in1, const short& in2, const short& pwm){ in1_ = &in1; in2_ = &in2; pwm_ = &pwm; };
   

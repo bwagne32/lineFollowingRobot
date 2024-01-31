@@ -20,6 +20,18 @@ const short kd = 0;
       Use drive(int signal)
       // receives input -100 to 100 for motor speed (0 for coast, negative for reverse, and positive for forward)
 */
+
+void loop(){
+  while(1){ // Do your PID loop in here
+
+
+
+  }
+
+}
+
+
+
 void PID(){// Cole stuff
 
 }
