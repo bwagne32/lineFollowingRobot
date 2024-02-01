@@ -8,7 +8,7 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-void loop(){
+void loopComms(){
   while(1){
 
 
@@ -18,7 +18,7 @@ void loop(){
 }
 
 
-
+/*
 void comms(){
   if (deviceConnected) {
         pTxCharacteristic->setValue(&txValue, 1);
@@ -119,11 +119,6 @@ void setup() {
   pServer->getAdvertising()->start();
   Serial.println("Waiting a client connection to notify...");
 }
-
-void loop() {
-
-    
-}
-
+*/
 
 #endif // COMMS_HPP_

@@ -21,7 +21,7 @@ const short kd = 0;
       // receives input -255 to 255 for motor speed (0 for coast, negative for reverse, and positive for forward)
 */
 
-void loop(){
+void loopPID(){
   while(1){ // Do your PID loop in here
 
 
