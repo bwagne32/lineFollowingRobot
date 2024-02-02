@@ -32,6 +32,7 @@ const short fanEnablePin = 8;
 
 // Global non constant variables ////////////////////////////////////////////////////////////////////////////////
 short output = 0;
+bool stop = 0;
 
 
 void setup() {
@@ -128,12 +129,12 @@ void loop() { // unused since each core will be operating indepently
 
 // Core loops //////////////////////////////////////////////////////////////////////////////////////////////////
 void car(void *pvParameters){ // reads inputs, calculates PD control, and sends motor signals
-  PID_HPP_::loop();
+  PID_HPP_::loopPID(stop, left, right);
 }
 
 
 void comms(void *pvParameters) { // sends communication info over BLE
-    COMMS_HPP_::loop();
+    COMMS_HPP_::loopComms(stop);
 }
 
 // This function will probably need reworked

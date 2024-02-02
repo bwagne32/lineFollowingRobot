@@ -8,10 +8,12 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-void loopComms(){
+// https://github.com/espressif/arduino-esp32/tree/master/libraries/BluetoothSerial
+
+void loopComms(bool& stop){
   while(1){
 
-
+    //main::stop = 1;
 
     
   }

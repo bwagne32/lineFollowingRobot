@@ -3,6 +3,7 @@
 #define PID_HPP_
 
 #include "comms.hpp"
+#include "var.hpp"
 #include <QTRSensors.h>
 
 // QT sensors setup //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,14 +17,17 @@ uint16_t position;
 const short kp = 0;
 const short kd = 0; 
 
+
+using VAR_HPP_::motor;
 /* Motor info
       Use drive(int signal)
       // receives input -255 to 255 for motor speed (0 for coast, negative for reverse, and positive for forward)
 */
 
-void loopPID(){
-  while(1){ // Do your PID loop in here
-
+void loopPID(bool &stop, motor &left, motor &right){
+  while(!stop){ // bluetooth communication controls stop
+    // Do your PID loop in here
+    
 
 
   }
@@ -37,10 +41,6 @@ void PID(){// Cole stuff
 
 //AHHHHHH PLEASE HELP MEEEE
 }
-
-
-
-
 
 
 
