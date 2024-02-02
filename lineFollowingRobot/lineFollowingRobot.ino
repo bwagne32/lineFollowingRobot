@@ -30,6 +30,8 @@ VAR_HPP_::motor right(rightWheelPin1,rightWheelPin2,rightPWMpin);
 const short fanPin = 12;
 const short fanEnablePin = 8;
 
+// Global non constant variables ////////////////////////////////////////////////////////////////////////////////
+short output = 0;
 
 
 void setup() {
