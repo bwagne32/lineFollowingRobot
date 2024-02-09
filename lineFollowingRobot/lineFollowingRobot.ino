@@ -10,6 +10,7 @@
 #include "var.hpp"
 #include "comms.hpp"
 #include "PID.hpp"
+#include "DShotRMT.h"
 
 #include <QTRSensors.h>
 #include <ESP32Servo.h>
