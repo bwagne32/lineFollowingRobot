@@ -27,9 +27,17 @@ const short rightPWMpin = 2;
 VAR_HPP_::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
 VAR_HPP_::motor right(rightWheelPin1,rightWheelPin2,rightPWMpin);
 
-// Other pins //////////////////////////////////////////////////////////////////////////////////////////////////
+// Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
 const short fanPin = 12;
 const short fanEnablePin = 8;
+const auto DSHOT_MODE = DSHOT300;
+const auto FAILSAFE_THROTTLE = 999;
+const auto INITIAL_THROTTLE = 48;
+
+// Initialize a DShotRMT object for the motor
+DShotRMT motor01(fanPin, RMT_CHANNEL_0);
+
+
 
 // Global non constant variables ////////////////////////////////////////////////////////////////////////////////
 short output = 0;
@@ -102,6 +110,10 @@ void setup() {
   delay(1000);
 */
 
+  // DSHOT
+  motor01.begin(DSHOT_MODE);
+
+
 
  /*
   xTaskCreatePinnedToCore(
@@ -135,7 +147,7 @@ void car(void *pvParameters){ // reads inputs, calculates PD control, and sends 
 
 
 void comms(void *pvParameters) { // sends communication info over BLE
-    COMMS_HPP_::loopComms(stop);
+    COMMS_HPP_::loopComms(stop,motor01);
 }
 
 // This function will probably need reworked
