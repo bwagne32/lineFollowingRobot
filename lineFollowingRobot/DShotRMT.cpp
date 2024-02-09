@@ -4,7 +4,7 @@
 // Author:  	derdoktor667
 //
 
-#include <DShotRMT.h>
+#include "DShotRMT.h"
 
 // Constructor that takes gpio and rmtChannel as arguments
 DShotRMT::DShotRMT(gpio_num_t gpio, rmt_channel_t rmtChannel)
