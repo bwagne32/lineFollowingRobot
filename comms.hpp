@@ -5,13 +5,22 @@
 #include "PID.hpp"
 #include "DShotRMT.h"
 
-// https://github.com/espressif/arduino-esp32/tree/master/libraries/BluetoothSerial
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
 
-void loopComms(bool& stop, DShotRMT& motor01){
+void killSwitch(bool &stop, DShotRMT& motor01){
+  while(stop){// There's some infinite loop protection so I have to fight it like this
+      motor01.sendThrottleValue(0);
+      delay(100000000);
+    } 
+}
+
+void loopComms(bool& stop, DShotRMT& motor01, BLECharacteristic *pCharacteristic){
   motor01.sendThrottleValue(50); // idk what to set this to. Will figure out with testing
 
   while(1){
-
+    //pCharacteristic->setValue("Hello World");
     //main::stop = 1;
 
     

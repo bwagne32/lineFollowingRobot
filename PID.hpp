@@ -1,3 +1,4 @@
+#include <stdint.h>
 // PID loop controls
 #ifndef PID_HPP_
 #define PID_HPP_
@@ -24,25 +25,35 @@ using VAR_HPP_::motor;
       // receives input -255 to 255 for motor speed (0 for coast, negative for reverse, and positive for forward)
 */
 
+void killSwitch(bool &stop, motor &left, motor &right){
+  while(stop){// There's some infinite loop protection so I have to fight it like this
+      left.brake();
+      right.brake();
+      delay(100000000);
+    } 
+}
+
 void loopPID(bool &stop, motor &left, motor &right){
-  while(!stop){ // bluetooth communication controls stop
+  while(true){
     // Do your PID loop in here
     
 
 
+    if(stop)
+      killSwitch(stop, left, right);
   }
 
 }
 
 
-
+/*
 void PID(){// Cole stuff
 
 
 //AHHHHHH PLEASE HELP MEEEE
 }
 
-
+*/
 
 
 
@@ -60,6 +71,7 @@ void PID(){// Cole stuff
 void read(){
   position = qtr.readLineBlack(sensorValues);
 }
+
 
 
 

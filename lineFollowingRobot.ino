@@ -13,23 +13,28 @@
 #include "DShotRMT.h"
 
 #include <QTRSensors.h>
-#include <ESP32Servo.h>
+//#include <ESP32Servo.h>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+
+
 
 // Motors //////////////////////////////////////////////////////////////////////////////////////////////////
-const short leftWheelPin1 = 7;
-const short leftWheelPin2 = 6;
-const short leftPWMpin = 5;
+const uint8_t leftWheelPin1 = 7;
+const uint8_t leftWheelPin2 = 6;
+const uint8_t leftPWMpin = 5;
 
-const short rightWheelPin1 = 4;
-const short rightWheelPin2 = 3;
-const short rightPWMpin = 2;
+const uint8_t rightWheelPin1 = 4;
+const uint8_t rightWheelPin2 = 3;
+const uint8_t rightPWMpin = 2;
 
 VAR_HPP_::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
 VAR_HPP_::motor right(rightWheelPin1,rightWheelPin2,rightPWMpin);
 
 // Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
-const short fanPin = 12;
-const short fanEnablePin = 8;
+const uint8_t fanPin = 12;
+const uint8_t fanEnablePin = 8;
 const auto DSHOT_MODE = DSHOT300;
 const auto FAILSAFE_THROTTLE = 999;
 const auto INITIAL_THROTTLE = 48;
@@ -37,15 +42,62 @@ const auto INITIAL_THROTTLE = 48;
 // Initialize a DShotRMT object for the motor
 DShotRMT motor01(fanPin, RMT_CHANNEL_0);
 
-
-
 // Global non constant variables ////////////////////////////////////////////////////////////////////////////////
 short output = 0;
-bool stop = 0;
+bool stop = false;
+
+
+// BLE stuff ////////////////////////////////////////////////////////////////////////////////
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+
+class MyCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      std::string value = pCharacteristic->getValue();
+
+      if (value.length() > 0) {
+        //Serial.println("*********");
+        //Serial.print("New value: ");
+        //for (int i = 0; i < value.length(); i++)
+          //Serial.print(value[i]);
+        if(value == "kill"){
+          stop = true;
+          //Serial.println(stop);
+          //Serial.println("\n\n\nded\n\n\n");
+        }
+      }
+    }
+};
 
 
 void setup() {
-  // Motors 
+  Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+
+  // BLE ////////////////////////////////////////////////////////////////////////////////
+  
+  BLEDevice::init("MyESP32");
+  BLEServer *pServer = BLEDevice::createServer();
+
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+                                         CHARACTERISTIC_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+
+  pCharacteristic->setCallbacks(new MyCallbacks());
+
+  pCharacteristic->setValue("Hello World");
+  pService->start();
+
+  BLEAdvertising *pAdvertising = pServer->getAdvertising();
+  pAdvertising->start();
+
+  // Motors ////////////////////////////////////////////////////////////////////////////////
   pinMode(leftWheelPin1, OUTPUT);
   pinMode(leftWheelPin2, OUTPUT);
   pinMode(leftPWMpin, OUTPUT);
@@ -58,7 +110,7 @@ void setup() {
   pinMode(fanEnablePin, OUTPUT);
 
 
-  // QTR sensors 
+  // QTR sensors ////////////////////////////////////////////////////////////////////////////////
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){  A0, A1, A2, A3, A4, A5, A6, A7 }, SensorCount);
   qtr.setEmitterPin(2);
@@ -111,6 +163,7 @@ void setup() {
 */
 
   // DSHOT
+  digitalWrite(fanEnablePin, HIGH);
   motor01.begin(DSHOT_MODE);
 
 
@@ -130,9 +183,11 @@ void setup() {
     CORE_0  // Core on which the task will run
   );
 */
-  digitalWrite(fanEnablePin, HIGH);
-  xTaskCreatePinnedToCore(comms, "Motor control", 2048, nullptr, 2, NULL, core1);
+  //Serial.print("running on core ");
+  //Serial.println(xPortGetCoreID());
+  
   xTaskCreatePinnedToCore(car, "PID control", 2048, nullptr, 2, NULL, core0);
+  xTaskCreatePinnedToCore(comms, "Motor control", 2048, (void *)pCharacteristic, 2, NULL, core1);
 }
 
 
@@ -147,17 +202,8 @@ void car(void *pvParameters){ // reads inputs, calculates PD control, and sends 
 
 
 void comms(void *pvParameters) { // sends communication info over BLE
-    COMMS_HPP_::loopComms(stop,motor01);
+    COMMS_HPP_::loopComms(stop, motor01, (BLECharacteristic*)pvParameters);
 }
-
-// This function will probably need reworked
-void fan(short pwm){// set fan speed
-  analogWrite(fanPin, pwm);
-}
-
-
-
-
 
 
 

@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <cmath>
 #include "esp32-hal-gpio.h"
 #include "esp32-hal.h"
@@ -18,7 +19,7 @@ PWM   in1    in2
 */
 class motor {// I'm too lazy to make an actual cpp file for this so it'll be somewhat cramped
 public:
-  motor (const short& in1, const short& in2, const short& pwm){ in1_ = &in1; in2_ = &in2; pwm_ = &pwm; };
+  motor (const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){ in1_ = &in1; in2_ = &in2; pwm_ = &pwm; };
   
   void brake(){
     manual(0,true,true);
@@ -44,9 +45,9 @@ public:
   }
 
 private: // pointers to const pin references
-  const short *pwm_;
-  const short *in1_;
-  const short *in2_;
+  const uint8_t *pwm_;
+  const uint8_t *in1_;
+  const uint8_t *in2_;
 };
 
 
