@@ -7,6 +7,8 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
+#include "test.hpp"
+
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
@@ -19,25 +21,31 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       std::string value = pCharacteristic->getValue();
 
       if (value.length() > 0) {
-        Serial.println("*********");
-        Serial.print("New value: ");
+        //Serial.println("*********");
+        //Serial.print("New value: ");
         for (int i = 0; i < value.length(); i++)
-          Serial.print(value[i]);
-
-        Serial.println();
-        Serial.println("*********");
+          //Serial.print(value[i]);
+        if(value == "kill"){
+          test_hpp::killSwitch = true;
+          //Serial.println("\n\n\nDed\n\n\n");
+          //Serial.println(test_hpp::killSwitch);
+        }
+        
+        
+        //Serial.println();
+        //Serial.println("*********");
       }
     }
 };
 
 void setup() {
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
-  Serial.println("1- Download and install an BLE scanner app in your phone");
-  Serial.println("2- Scan for BLE devices in the app");
-  Serial.println("3- Connect to MyESP32");
-  Serial.println("4- Go to CUSTOM CHARACTERISTIC in CUSTOM SERVICE and write something");
-  Serial.println("5- See the magic =)");
+  //Serial.println("1- Download and install an BLE scanner app in your phone");
+  //Serial.println("2- Scan for BLE devices in the app");
+  //Serial.println("3- Connect to MyESP32");
+  //Serial.println("4- Go to CUSTOM CHARACTERISTIC in CUSTOM SERVICE and write something");
+  //Serial.println("5- See the magic =)");
 
   BLEDevice::init("MyESP32");
   BLEServer *pServer = BLEDevice::createServer();
