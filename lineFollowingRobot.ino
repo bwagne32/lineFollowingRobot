@@ -7,10 +7,11 @@
 #define core0 0
 #define core1 1
 
-#include "var.hpp"
+#include "motorclass.hpp"
 #include "comms.hpp"
 #include "PID.hpp"
 #include "DShotRMT.h"
+#include <motorclass.h>
 
 #include <QTRSensors.h>
 //#include <ESP32Servo.h>
@@ -29,8 +30,8 @@ const uint8_t rightWheelPin1 = 4;
 const uint8_t rightWheelPin2 = 3;
 const uint8_t rightPWMpin = 2;
 
-VAR_HPP_::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
-VAR_HPP_::motor right(rightWheelPin1,rightWheelPin2,rightPWMpin);
+motor left(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
+motor right(&rightWheelPin1,&rightWheelPin2,&rightPWMpin);
 
 // Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
 const uint8_t fanPin = 12;
