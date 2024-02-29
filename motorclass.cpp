@@ -46,7 +46,7 @@ void motor::direction(bool fwdRev);{
 void speed(int desiredSpeed){
   // funciton sets the desired PWM value
 
-  int cappedSpeed; // Value within arduino PWM range;
+  uint8_t cappedSpeed; // Value within arduino PWM range;
 
   if(desiredSpeed > 255){
     // check for overflow
