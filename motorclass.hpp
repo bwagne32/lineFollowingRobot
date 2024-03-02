@@ -18,34 +18,39 @@ PWM   in1    in2
 
 */
 
+// Cole's motor class //////////////////////////////////////////////////////////////////////////////////////////////////
+
 class motor {
   // class for control of each motor
   public:
 
-    motor(const uint8_t* IN1_pin, const uint8_t* IN2_pin, const uint8_t* PWM_pin);
+    motor(const uint8_t&, const uint8_t&, const uint8_t&);
 
     void coast();
     void brake();
     void direction(bool fwdRev);
     void speed(int desiredSpeed);
-    Void outputToDrive();
+    void outputToDrive();
   private:
 
     // pins
-    uint8_t* _IN1_pin;
-    uint8_t* _IN2_pin;
-    uint8_t* _PWM_pin;
+    const uint8_t *_IN1_pin;
+    const uint8_t *_IN2_pin;
+    const uint8_t *_PWM_pin;
 
     // values for pins
     uint8_t _IN1_value;
     uint8_t _IN2_value;
     uint8_t _PWM_value;
 
-}
-/*
-class motor {// I'm too lazy to make an actual cpp file for this so it'll be somewhat cramped
+};
+
+// Ben's motor class //////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+class motor_calibration {// Keeping this to use for conditioning the sensors in setup()
 public:
-  motor (const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){ in1_ = &in1; in2_ = &in2; pwm_ = &pwm; };
+  motor_calibration(const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){ in1_ = &in1; in2_ = &in2; pwm_ = &pwm; };
   
   void brake(){
     manual(0,true,true);
@@ -77,5 +82,4 @@ private: // pointers to const pin references
 };
 
 
-*/
 #endif // VAR_HPP_

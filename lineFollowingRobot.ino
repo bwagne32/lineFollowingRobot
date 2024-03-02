@@ -11,7 +11,6 @@
 #include "comms.hpp"
 #include "PID.hpp"
 #include "DShotRMT.h"
-#include <motorclass.h>
 
 #include <QTRSensors.h>
 //#include <ESP32Servo.h>
@@ -30,8 +29,8 @@ const uint8_t rightWheelPin1 = 4;
 const uint8_t rightWheelPin2 = 3;
 const uint8_t rightPWMpin = 2;
 
-motor left(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
-motor right(&rightWheelPin1,&rightWheelPin2,&rightPWMpin);
+motorclass_h::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
+motorclass_h::motor right(rightWheelPin1, rightWheelPin2, rightPWMpin);
 
 // Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
 const uint8_t fanPin = 12;
@@ -44,7 +43,7 @@ const auto INITIAL_THROTTLE = 48;
 DShotRMT motor01(fanPin, RMT_CHANNEL_0);
 
 // Global non constant variables ////////////////////////////////////////////////////////////////////////////////
-short output = 0;
+//short output = 0;
 bool stop = false;
 
 
@@ -73,7 +72,9 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 
 
 void setup() {
-  //Serial.begin(115200);
+  motorclass_h::motor_calibration *leftPtr = new motorclass_h::motor_calibration(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
+  //leftPtr->motor_calibration(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
+  //motorclass_h::motor_calibration rightCalibrate(&rightWheelPin1,&rightWheelPin2,&rightPWMpin);
 
 
   // BLE ////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +126,7 @@ void setup() {
   // 0.1 ms per sensor * 4 samples per sensor read (default) * 6 sensors
   // * 10 reads per calibrate() call = ~24 ms per calibrate() call.
   // Call calibrate() 400 times to make calibration take about 10 seconds.
-  for (uint16_t i = 0; i < 200; i++)
+  /*for (uint16_t i = 0; i < 200; i++)
   {
     left.drive(50);
     right.drive(-50);
@@ -137,7 +138,7 @@ void setup() {
 
   left.drive(0);
   right.drive(0);
-
+*/
   digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
 

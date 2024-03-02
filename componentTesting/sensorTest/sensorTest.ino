@@ -15,7 +15,7 @@ uint16_t position;
 
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
-uint16_t inputTime = 500;
+uint16_t inputTime = 500; 
 
 
 void setup() {
@@ -70,7 +70,7 @@ void setup() {
 
 void loop() {
   if(currentMillis - previousMillis >= inputTime){
-      position = qtr.readLineBlack(sensorValues);
+      position = qtr.readLineBlack(sensorValues); // Range 0-7000
       Serial.print("Position: ");
       Serial.println(position);
       previousMillis = currentMillis;

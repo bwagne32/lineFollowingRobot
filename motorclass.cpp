@@ -1,17 +1,21 @@
 #include "arduino.h"
-#include "motorclass.h"
+#include "motorclass.hpp"
 
-motor::motor(const uint8_t* IN1_pin, const uint8_t* IN2_pin, const uint8_t* PWM_pin){
 
-  _IN1_pin= IN1_pin;
-  _IN2_pin= IN2_pin;
-  _PWM_pin= PWM_pin;
+// Cole's motor class //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  pinmode(*_IN1_pin, OUTPUT);
-  pinmode(*_IN2_pin, OUTPUT);
-  pinmode(*_PWM_pin, OUTPUT);
 
+
+motor::motor(const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){ 
+  _IN1_pin = &in1;
+  _IN2_pin = &in2;
+  _PWM_pin = &pwm;
+
+  _IN1_value = 0;
+  _IN2_value = 0;
+  _PWM_value = 0;
 }
+
 
 void motor::coast(){
 // function commands drive to let motor coast
@@ -25,7 +29,7 @@ void motor::brake(){
   _IN2_value = 1;
 }
 
-void motor::direction(bool fwdRev);{
+void motor::direction(bool fwdRev){
 // function sets direction of motor
 // False= Forward. True = Reverse
 
@@ -43,7 +47,7 @@ void motor::direction(bool fwdRev);{
   }
 }
 
-void speed(int desiredSpeed){
+void motor::speed(int desiredSpeed){
   // funciton sets the desired PWM value
 
   uint8_t cappedSpeed; // Value within arduino PWM range;
@@ -68,7 +72,7 @@ void speed(int desiredSpeed){
 
 }
 
-void outputToDrive(){
+void motor::outputToDrive(){
   // outputs values to output pins connected to motor drive for specific motor
 
   digitalWrite(*_IN1_pin , _IN1_value);
@@ -77,3 +81,4 @@ void outputToDrive(){
 
 
 }
+
