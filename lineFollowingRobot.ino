@@ -70,9 +70,8 @@ class MyCallbacks: public BLECharacteristicCallbacks {
     }
 };
 
-
 void setup() {
-  motorclass_h::motor_calibration *leftPtr = new motorclass_h::motor_calibration(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
+  //motorclass_h::motor_calibration *leftPtr = new motorclass_h::motor_calibration;//(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
   //leftPtr->motor_calibration(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
   //motorclass_h::motor_calibration rightCalibrate(&rightWheelPin1,&rightWheelPin2,&rightPWMpin);
 
