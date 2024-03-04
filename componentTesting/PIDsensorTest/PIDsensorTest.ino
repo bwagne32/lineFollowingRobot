@@ -1,12 +1,26 @@
-/*
-Our esp32 died :(
-  this is emergency thrown together to test out PID
+/* References
+  QTR sensor: https://github.com/pololu/qtr-sensors-arduino/blob/master/examples/QTRAExample/QTRAExample.ino
+
+
 */
+/*
+/// Changes
+  kp -> .4
+  Making sure pinouts are correct
 
-
+*/
 #include <QTRSensors.h>
 
 
+QTRSensors qtr;
+const uint8_t SensorCount = 6;
+uint16_t sensorValues[SensorCount];
+uint16_t position;
+
+
+unsigned long currentMillis = 0;
+unsigned long previousMillis = 0;
+uint16_t inputTime = 500; 
 // Motors //////////////////////////////////////////////////////////////////////////////////////////////////
 const uint8_t leftWheelPin1 = 4;
 const uint8_t leftWheelPin2 = 5;
@@ -25,7 +39,7 @@ class motor {
     void direction(bool fwdRev);
     void speed(int desiredSpeed);
     void outputToDrive();
-    //void printOut(){//Serial.print("PWM: "); //Serial.println(_PWM_value);}
+
   private:
     // pins
     const uint8_t *_IN1_pin;
@@ -36,29 +50,28 @@ class motor {
     bool _IN2_value;
     uint8_t _PWM_value;
 };
-QTRSensors qtr;
-const uint8_t SensorCount = 6;
-uint16_t sensorValues[SensorCount];
-uint16_t position;  // 0-7000
-
 
 // PID SETUP //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int output;   // The output value of the controller to be converted to a ratio for turning
-short error;  // Setpoint minus measured value
+double output;   // The output value of the controller to be converted to a ratio for turning
+double error;  // Setpoint minus measured value
 // *******************************************
-const float Kp = .4;  // Proportional constant
+const double Kp = .4;  // Proportional constant
 const float Ki = 0.;   // Integral constant
 const float Kd = 0.;   // Derivative constant
 // *******************************************
 bool clamp = 0;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp;        // Prevents integral windup.  If 0 then continue to add to integral
 bool signsEqual;    // = 1 if error and output have the same sign
-float iError = 0.;  // Integral of error
-float dError = 0;
-float prevError1 = 0;
-float prevError2 = 0;
+double iError = 0.;  // Integral of error
+double dError = 0;
+double prevError1 = 0;
+double prevError2 = 0;
+double setpoint = 2500;
+
+
+
 
 int currentTime;
 int previousTime = 0;
@@ -66,101 +79,106 @@ int timeDiff;
 
 // Line follower Motor Control **************************************************************************************
 
-int motorNominalSpeed = 40;  // 0 to 255
+int motorNominalSpeed = 50;  // 0 to 255
 int calculatedTurnSpeed;
 
 float sensingRatio;
 float turnRatio;
-
-int setpoint = 3000;  // sets target position for controller. Theoretically middle of bot
-
-
 motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
 motor right(rightWheelPin1, rightWheelPin2, rightPWMpin);
 
-void setup(){
-  //Serial.begin(9600);
+
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Ready");
   
-  // Motors ////////////////////////////////////////////////////////////////////////////////
-  pinMode(leftWheelPin1, OUTPUT);
-  pinMode(leftWheelPin2, OUTPUT);
-  pinMode(leftPWMpin, OUTPUT);
-
-  pinMode(rightWheelPin1, OUTPUT);
-  pinMode(rightWheelPin2, OUTPUT);
-  pinMode(rightPWMpin, OUTPUT);
-
-  left.direction(false);
-  right.direction(false);
-  
-
-// QTR sensors ////////////////////////////////////////////////////////////////////////////////
+  // QTR sensors ////////////////////////////////////////////////////////////////////////////////
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){  A0, A1, A2, A3, A4, A5 }, SensorCount);
   qtr.setEmitterPin(2);
 
-  //delay(100);
+  delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);  // turn on Arduino's LED to indicate we are in calibration mode
 
-// analogRead() takes about 0.1 ms on an AVR.
+
+
+  // analogRead() takes about 0.1 ms on an AVR.
   // 0.1 ms per sensor * 4 samples per sensor read (default) * 6 sensors
   // * 10 reads per calibrate() call = ~24 ms per calibrate() call.
   // Call calibrate() 400 times to make calibration take about 10 seconds.
-  //Serial.println("ready");
   for (uint16_t i = 0; i < 400; i++)
   {
     qtr.calibrate();
   }
-    digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
+
+  digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
 
+
+  // print the calibration minimum values measured when emitters were on
+  Serial.begin(9600);
   for (uint8_t i = 0; i < SensorCount; i++)
   {
-    //Serial.print(qtr.calibrationOn.minimum[i]);
-    //Serial.print(' ');
+    Serial.print(qtr.calibrationOn.minimum[i]);
+    Serial.print(' ');
   }
-  //Serial.println();
+  Serial.println();
+
+  // print the calibration maximum values measured when emitters were on
   for (uint8_t i = 0; i < SensorCount; i++)
   {
-    //Serial.print(qtr.calibrationOn.maximum[i]);
-    //Serial.print(' ');
+    Serial.print(qtr.calibrationOn.maximum[i]);
+    Serial.print(' ');
   }
-  //Serial.println();
-  //Serial.println();
+  Serial.println();
+  Serial.println();
+  delay(1000);
+
 }
 
-void loop(){
+void loop() {
   updateTime();
-  //if(timeDiff > 100){
-    calcPID();
-    ////Serial.print("output: ");
-    ////Serial.println(output);
-    //delay(250);
-    //Serial.print("Position: ");
-    //Serial.println(position);
-    //Serial.print("Left: ");
-    //left.printOut();
-    //Serial.print("Right: ");
-    //right.printOut();
-    
-    updateOutput();
-    delay(100);
-    
- // }
+  calcPID();
+  Serial.print("\noutput: ");
+  Serial.print(output);
+  Serial.print("\tposition: ");
+  Serial.print(position);
+  Serial.print("\terror: ");
+  Serial.print(error);
+Serial.println();
+  updateOutput(left,right);
+Serial.print("\tsenseRatio: ");
+      Serial.print(sensingRatio);
+      Serial.print("\t Turning Ratio: ");
+      Serial.print(turnRatio);
+      
+     Serial.print("\t Nominal turn speed: ");
+      Serial.print(motorNominalSpeed);
+     Serial.print("\tcalculated turn speed: ");
+      Serial.print(calculatedTurnSpeed);
+       
+  delay(1000);
+
+
+
+
 }
+
+
+
 
 
 // Functions //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void calcPID(){ // Runs through P code, I code, and D code and generates an output signal
   calcError();
-  //Serial.println(error);
-  //calcIntegral();
-  //calcDerivative();
+  calcIntegral();
+  calcDerivative();
   ///// CALC. OUTPUT /////////////////////////////////////////////////////////////////////////////////////////////////
 
-    output = Kp * error + 0.5 + Ki * iError + Kd * dError;  // Calculate Output Command
+    output = Kp * error + Ki * iError + Kd * dError;  // Calculate Output Command
 
     // Clamp output from 0 to 255 // For use with integrator clamping
     if (output > 1000 || output < -1000) {
@@ -174,13 +192,8 @@ void calcPID(){ // Runs through P code, I code, and D code and generates an outp
 
 void calcError(){
   // Error calc ///////////////////////////////////////////////////////////////////
-    //uint16_t posArray[5];
-    for(int i = 0; i < 5; i++)
-      position += qtr.readLineBlack(sensorValues);
-    position = position / 5;
-      //posArray[i] = qtr.readLineBlack(sensorValues);
-    
-    //position = ;
+    position = qtr.readLineBlack(sensorValues);
+    //position = 100;
     error = setpoint - position;
 } // inside PID
 
@@ -222,7 +235,8 @@ void updateTime(){
   timeDiff = currentTime - previousTime;
 }
 
-void updateOutput(){
+
+void updateOutput(motor &left, motor &right){
   ///// ROBOT TURNING //////////////////////////////////////////////////////////////////////////////////////////////////
     //  NEW CODE FOR LINE FOLLOWER ************************************************************************
 
@@ -233,20 +247,18 @@ void updateOutput(){
 
     if (output < 0) {
       // if robot is left of line
-
+Serial.println("ROBOT LEFT");
       // Calculate sensing ratio
       sensingRatio = (-1 * output) / 1000.;
-
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio;
       calculatedTurnSpeed = motorNominalSpeed * turnRatio;
-
       // set speed of right motor to execute turn
       right.speed(calculatedTurnSpeed);
 
     } else if (output > 0) {
       // if robot is right of line
-
+Serial.println("ROBOT RIFGTH");
       // Calculate sensing ratio
       sensingRatio = (1 * output) / 1000.;
 
@@ -334,7 +346,7 @@ void motor::speed(int desiredSpeed){
 
 void motor::outputToDrive(){
   // outputs values to output pins connected to motor drive for specific motor
-  
+
   digitalWrite(*_IN1_pin , _IN1_value);
   digitalWrite(*_IN2_pin , _IN2_value);
   analogWrite(*_PWM_pin , _PWM_value);
