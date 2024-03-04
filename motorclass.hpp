@@ -23,26 +23,22 @@ PWM   in1    in2
 class motor {
   // class for control of each motor
   public:
-
     motor(const uint8_t&, const uint8_t&, const uint8_t&);
-
     void coast();
     void brake();
     void direction(bool fwdRev);
     void speed(int desiredSpeed);
     void outputToDrive();
-  private:
 
+  private:
     // pins
     const uint8_t *_IN1_pin;
     const uint8_t *_IN2_pin;
     const uint8_t *_PWM_pin;
-
     // values for pins
-    uint8_t _IN1_value;
-    uint8_t _IN2_value;
+    bool _IN1_value;
+    bool _IN2_value;
     uint8_t _PWM_value;
-
 };
 
 // Ben's motor class //////////////////////////////////////////////////////////////////////////////////////////////////

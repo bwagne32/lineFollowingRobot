@@ -3,9 +3,6 @@
 
 
 // Cole's motor class //////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 motor::motor(const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){ 
   _IN1_pin = &in1;
   _IN2_pin = &in2;

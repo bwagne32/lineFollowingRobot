@@ -17,7 +17,7 @@ uint16_t inputTime = 1000;
 DShotRMT motor01(fanPin, RMT_CHANNEL_0);
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("Ready");
   pinMode(fanPin, OUTPUT);
   pinMode(fanEnablePin, OUTPUT);
@@ -25,7 +25,12 @@ void setup() {
 
   digitalWrite(fanEnablePin, HIGH);
   motor01.begin(DSHOT_MODE);
-
+  while(!Serial.available()){
+    Serial.println("Initial input: ");
+    delay(10000);
+  }
+  out = Serial.readStringUntil('\n').toInt();
+  motor01.sendThrottleValue(out);
 }
 
 void loop() {
@@ -42,5 +47,5 @@ void loop() {
 }
 
 uint16_t readThrottle(){
-        return Serial.readStringUntil('\n').toInt();
+  return Serial.readStringUntil('\n').toInt();
 }
