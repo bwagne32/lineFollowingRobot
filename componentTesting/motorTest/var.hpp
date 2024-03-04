@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <cmath>
-#include "esp32-hal-gpio.h"
-#include "esp32-hal.h"
+//#include <cmath>
+//#include "esp32-hal-gpio.h"
+//#include "esp32-hal.h"
 // PID loop controls
 #ifndef VAR_HPP_
 #define VAR_HPP_
@@ -39,7 +39,7 @@ public:
 
   void manual(short signal, bool in1, bool in2){
     short output;
-    signal = std::abs(signal);
+    signal = abs(signal);
     if(signal > 255)
       output = 255;
     else

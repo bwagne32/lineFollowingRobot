@@ -8,9 +8,9 @@ Our esp32 died :(
 
 
 // Motors //////////////////////////////////////////////////////////////////////////////////////////////////
-const uint8_t leftWheelPin1 = 6;
+const uint8_t leftWheelPin1 = 4;
 const uint8_t leftWheelPin2 = 5;
-const uint8_t leftPWMpin = 4;
+const uint8_t leftPWMpin = 6;
 
 const uint8_t rightWheelPin1 = 8;
 const uint8_t rightWheelPin2 = 9;
@@ -48,9 +48,9 @@ uint16_t position;  // 0-7000
 int output;   // The output value of the controller to be converted to a ratio for turning
 float error;  // Setpoint minus measured value
 // *******************************************
-const float Kp = 50.;  // Proportional constant
-const float Ki = .5;   // Integral constant
-const float Kd = 5.;   // Derivative constant
+const float Kp = .14;  // Proportional constant
+const float Ki = 0.;   // Integral constant
+const float Kd = 0.;   // Derivative constant
 // *******************************************
 bool clamp = 0;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -66,19 +66,21 @@ int timeDiff;
 
 // Line follower Motor Control **************************************************************************************
 
-int motorNominalSpeed = 190;  // 0 to 255
+int motorNominalSpeed = 50;  // 0 to 255
 int calculatedTurnSpeed;
 
 float sensingRatio;
 float turnRatio;
 
-int setpoint = 2500;  // sets target position for controller. Theoretically middle of bot
+int setpoint = 3000;  // sets target position for controller. Theoretically middle of bot
 
 
 motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
 motor right(rightWheelPin1, rightWheelPin2, rightPWMpin);
 
 void setup(){
+  Serial.begin(9600);
+  
   // Motors ////////////////////////////////////////////////////////////////////////////////
   pinMode(leftWheelPin1, OUTPUT);
   pinMode(leftWheelPin2, OUTPUT);
@@ -87,6 +89,14 @@ void setup(){
   pinMode(rightWheelPin1, OUTPUT);
   pinMode(rightWheelPin2, OUTPUT);
   pinMode(rightPWMpin, OUTPUT);
+
+  left.direction(false);
+  right.direction(false);
+  digitalWrite(leftWheelPin1, HIGH);
+    digitalWrite(leftWheelPin2, HIGH);
+        analogWrite(leftPWMpin, 255);
+
+
 // QTR sensors ////////////////////////////////////////////////////////////////////////////////
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){  A0, A1, A2, A3, A4, A5 }, SensorCount);
@@ -106,11 +116,28 @@ void setup(){
   }
     digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
+
+  for (uint8_t i = 0; i < SensorCount; i++)
+  {
+    Serial.print(qtr.calibrationOn.minimum[i]);
+    Serial.print(' ');
+  }
+  Serial.println();
+  for (uint8_t i = 0; i < SensorCount; i++)
+  {
+    Serial.print(qtr.calibrationOn.maximum[i]);
+    Serial.print(' ');
+  }
+  Serial.println();
+  Serial.println();
 }
 
 void loop(){
   updateTime();
   calcPID();
+  Serial.print("output: ");
+  Serial.println(output);
+  delay(250);
   updateOutput(left,right);
 }
 
@@ -119,6 +146,7 @@ void loop(){
 
 void calcPID(){ // Runs through P code, I code, and D code and generates an output signal
   calcError();
+  Serial.println(error);
   calcIntegral();
   calcDerivative();
   ///// CALC. OUTPUT /////////////////////////////////////////////////////////////////////////////////////////////////
