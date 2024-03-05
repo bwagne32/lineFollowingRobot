@@ -11,6 +11,7 @@ motor::motor(const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){
   _IN1_value = 0;
   _IN2_value = 0;
   _PWM_value = 0;
+
 }
 
 

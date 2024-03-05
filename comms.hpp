@@ -9,19 +9,19 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
-void killSwitch(bool &stop, DShotRMT& motor01){
+void killSwitch(bool &stop/*, DShotRMT& motor01*/){
   while(stop){// There's some infinite loop protection so I have to fight it like this
-      motor01.sendThrottleValue(0);
+      //motor01.sendThrottleValue(0);
       delay(100000000);
     } 
 }
 
-void loopComms(bool& stop, DShotRMT& motor01, BLECharacteristic *pCharacteristic){
-  motor01.sendThrottleValue(50); // idk what to set this to. Will figure out with testing
-
+void loopComms(bool& stop, /*DShotRMT& motor01,*/ BLECharacteristic *pCharacteristic){
+  //motor01.sendThrottleValue(50); // idk what to set this to. Will figure out with testing
+  Serial.println("comms");
+  long idk = 0;
   while(1){
-    //pCharacteristic->setValue("Hello World");
-    //main::stop = 1;
+    idk++;
 
     
   }

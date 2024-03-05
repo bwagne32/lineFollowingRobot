@@ -39,7 +39,7 @@ const auto FAILSAFE_THROTTLE = 999;
 const auto INITIAL_THROTTLE = 48;
 
 // Initialize a DShotRMT object for the motor
-DShotRMT motor01(fanPin, RMT_CHANNEL_0);
+//DShotRMT motor01(fanPin, RMT_CHANNEL_0);
 
 // Global non constant variables ////////////////////////////////////////////////////////////////////////////////
 //short output = 0;
@@ -74,7 +74,7 @@ void setup() {
   //leftPtr->motor_calibration(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
   //motorclass_h::motor_calibration rightCalibrate(&rightWheelPin1,&rightWheelPin2,&rightPWMpin);
 
-
+  Serial.begin(9600);
   // BLE ////////////////////////////////////////////////////////////////////////////////
   
   BLEDevice::init("MyESP32");
@@ -124,6 +124,10 @@ void setup() {
   // 0.1 ms per sensor * 4 samples per sensor read (default) * 6 sensors
   // * 10 reads per calibrate() call = ~24 ms per calibrate() call.
   // Call calibrate() 400 times to make calibration take about 10 seconds.
+  
+  for (uint16_t i = 0; i < 400; i++){
+    qtr.calibrate();
+  }
   /*for (uint16_t i = 0; i < 200; i++)
   {
     left.drive(50);
@@ -162,8 +166,8 @@ void setup() {
 */
 
   // DSHOT
-  digitalWrite(fanEnablePin, HIGH);
-  motor01.begin(DSHOT_MODE);
+  //digitalWrite(fanEnablePin, HIGH);
+  //motor01.begin(DSHOT_MODE);
 
 
 
@@ -184,9 +188,9 @@ void setup() {
 */
   //Serial.print("running on core ");
   //Serial.println(xPortGetCoreID());
-  
+  Serial.println("ready");
   xTaskCreatePinnedToCore(car, "PID control", 2048, nullptr, 2, NULL, core0);
-  xTaskCreatePinnedToCore(comms, "Motor control", 2048, (void *)pCharacteristic, 2, NULL, core1);
+  xTaskCreatePinnedToCore(comms, "BLE?", 2048, (void *)pCharacteristic, 2, NULL, core1);
 }
 
 
@@ -201,7 +205,7 @@ void car(void *pvParameters){ // reads inputs, calculates PD control, and sends 
 
 
 void comms(void *pvParameters) { // sends communication info over BLE
-    COMMS_HPP_::loopComms(stop, motor01, (BLECharacteristic*)pvParameters);
+    COMMS_HPP_::loopComms(stop, /*motor01,*/ (BLECharacteristic*)pvParameters);
 }
 
 

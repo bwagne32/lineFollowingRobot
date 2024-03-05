@@ -1,7 +1,7 @@
 #include "var.hpp"
 
 // Motors //////////////////////////////////////////////////////////////////////////////////////////////////
-/*
+
 const uint8_t leftWheelPin1 = 7;
 const uint8_t leftWheelPin2 = 6;
 const uint8_t leftPWMpin = 5;
@@ -9,7 +9,7 @@ const uint8_t leftPWMpin = 5;
 const uint8_t rightWheelPin1 = 4;
 const uint8_t rightWheelPin2 = 3;
 const uint8_t rightPWMpin = 2;
-*/
+/*
 const uint8_t leftWheelPin1 = 4;
 const uint8_t leftWheelPin2 = 5;
 const uint8_t leftPWMpin = 6;
@@ -17,7 +17,7 @@ const uint8_t leftPWMpin = 6;
 const uint8_t rightWheelPin1 = 8;
 const uint8_t rightWheelPin2 = 9;
 const uint8_t rightPWMpin = 10;
-
+*/
 VAR_HPP_::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
 VAR_HPP_::motor right(rightWheelPin1,rightWheelPin2,rightPWMpin);
 

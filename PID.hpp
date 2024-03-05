@@ -19,11 +19,11 @@ uint16_t position;  // 0-7000
 
 
 int output;   // The output value of the controller to be converted to a ratio for turning
-float error;  // Setpoint minus measured value
+short error;  // Setpoint minus measured value
 // *******************************************
-const float Kp = 50.;  // Proportional constant
-const float Ki = .5;   // Integral constant
-const float Kd = 5.;   // Derivative constant
+const float Kp = .2;  // Proportional constant
+const float Ki = .09;   // Integral constant
+const float Kd = .09;   // Derivative constant
 // *******************************************
 bool clamp = 0;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -39,7 +39,7 @@ int timeDiff;
 
 // Line follower Motor Control **************************************************************************************
 
-int motorNominalSpeed = 190;  // 0 to 255
+int motorNominalSpeed = 40;  // 0 to 255
 int calculatedTurnSpeed;
 
 float sensingRatio;
@@ -61,18 +61,36 @@ void killSwitch(bool &stop, motor &left, motor &right) {
   while (stop) {  // There's some infinite loop protection so I have to fight it like this
     left.brake();
     right.brake();
+    right.outputToDrive();
+    left.outputToDrive();
+    digitalWrite(LED_BUILTIN, HIGH);
+    //Serial.print("dead");
     delay(100000000);
   }
 }
 
 void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) {
+  Serial.println("car");
+  left.direction(true);
+  right.direction(true);
+
   while (true) {
     updateTime();
-    
+    //if(timeDiff > 100){
     calcPID();
-    
+    ////Serial.print("output: ");
+    ////Serial.println(output);
+    //delay(250);
+    //Serial.print("Position: ");
+    //Serial.println(position);
+    //Serial.print("Left: ");
+    //left.printOut();
+    //Serial.print("Right: ");
+    //right.printOut();
+    Serial.println(output);
     updateOutput(left,right);
-    
+    //delay(100);
+  
     
     if (stop)
       killSwitch(stop, left, right);
@@ -84,14 +102,15 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) 
 
 void calcPID(){ // Runs through P code, I code, and D code and generates an output signal
   calcError();
+  //Serial.println(error);
   calcIntegral();
   calcDerivative();
   ///// CALC. OUTPUT /////////////////////////////////////////////////////////////////////////////////////////////////
 
-    output = Kp * error + 0.5 + Ki * iError + Kd * dError;  // Calculate Output Command
+    output = Kp * error + Ki * iError + Kd * dError;  // Calculate Output Command
 
     // Clamp output from 0 to 255 // For use with integrator clamping
-    if (output > 1000 || output < -1000) {
+    if (output > 500 || output < -500) {
       clamp = 1;
 
     } else {
@@ -102,7 +121,14 @@ void calcPID(){ // Runs through P code, I code, and D code and generates an outp
 
 void calcError(){
   // Error calc ///////////////////////////////////////////////////////////////////
-    position = qtr.readLineBlack(sensorValues);
+    //uint16_t posArray[5];
+    for(int i = 0; i < 5; i++)
+      position += qtr.readLineBlack(sensorValues);
+    position = position / 5;
+
+      //posArray[i] = qtr.readLineBlack(sensorValues);
+    
+    //position = ;
     error = setpoint - position;
 } // inside PID
 
@@ -186,5 +212,6 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
     right.outputToDrive();
     left.outputToDrive();
 }
+
 
 #endif  // PID_HPP_
