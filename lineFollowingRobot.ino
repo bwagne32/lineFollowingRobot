@@ -74,7 +74,7 @@ void setup() {
   //leftPtr->motor_calibration(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
   //motorclass_h::motor_calibration rightCalibrate(&rightWheelPin1,&rightWheelPin2,&rightPWMpin);
 
-  Serial.begin(9600);
+  //Serial.begin(9600);
   // BLE ////////////////////////////////////////////////////////////////////////////////
   
   BLEDevice::init("MyESP32");

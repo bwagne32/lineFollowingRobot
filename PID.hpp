@@ -18,15 +18,15 @@ uint16_t position;  // 0-7000
 // PID SETUP //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int output;   // The output value of the controller to be converted to a ratio for turning
-short error;  // Setpoint minus measured value
+int output = 0;   // The output value of the controller to be converted to a ratio for turning
+short error = 0;  // Setpoint minus measured value
 // *******************************************
 const float Kp = .2;  // Proportional constant
 const float Ki = .09;   // Integral constant
-const float Kd = .09;   // Derivative constant
+const float Kd = .3;   // Derivative constant
 // *******************************************
-bool clamp = 0;     // = 0 if we are not clamping and = 1 if we are clamping
-bool iClamp;        // Prevents integral windup.  If 0 then continue to add to integral
+bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
+bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
 bool signsEqual;    // = 1 if error and output have the same sign
 float iError = 0.;  // Integral of error
 float dError = 0;
@@ -70,7 +70,7 @@ void killSwitch(bool &stop, motor &left, motor &right) {
 }
 
 void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) {
-  Serial.println("car");
+  //Serial.println("car");
   left.direction(true);
   right.direction(true);
 
@@ -87,9 +87,9 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) 
     //left.printOut();
     //Serial.print("Right: ");
     //right.printOut();
-    Serial.println(output);
+    //Serial.println(output);
     updateOutput(left,right);
-    //delay(100);
+    delay(100);
   
     
     if (stop)
@@ -121,11 +121,13 @@ void calcPID(){ // Runs through P code, I code, and D code and generates an outp
 
 void calcError(){
   // Error calc ///////////////////////////////////////////////////////////////////
+    /*
     //uint16_t posArray[5];
     for(int i = 0; i < 5; i++)
       position += qtr.readLineBlack(sensorValues);
     position = position / 5;
-
+*/
+    position = qtr.readLineBlack(sensorValues);
       //posArray[i] = qtr.readLineBlack(sensorValues);
     
     //position = ;
