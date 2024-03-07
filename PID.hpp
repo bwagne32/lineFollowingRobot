@@ -71,6 +71,8 @@ void killSwitch(bool &stop, motor &left, motor &right) {
 
 void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) {
   //Serial.println("car");
+  
+  
   left.direction(true);
   right.direction(true);
 
@@ -78,16 +80,6 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) 
     updateTime();
     //if(timeDiff > 100){
     calcPID();
-    ////Serial.print("output: ");
-    ////Serial.println(output);
-    //delay(250);
-    //Serial.print("Position: ");
-    //Serial.println(position);
-    //Serial.print("Left: ");
-    //left.printOut();
-    //Serial.print("Right: ");
-    //right.printOut();
-    //Serial.println(output);
     updateOutput(left,right);
     delay(100);
   

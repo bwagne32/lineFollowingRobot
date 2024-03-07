@@ -3,7 +3,7 @@
 
 
 // Cole's motor class //////////////////////////////////////////////////////////////////////////////////////////////////
-motor::motor(const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){ 
+motor::motor(const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm, const uint8_t speed){ 
   _IN1_pin = &in1;
   _IN2_pin = &in2;
   _PWM_pin = &pwm;
@@ -12,6 +12,7 @@ motor::motor(const uint8_t& in1, const uint8_t& in2, const uint8_t& pwm){
   _IN2_value = 0;
   _PWM_value = 0;
 
+  maxSpeed_ = speed;
 }
 
 
@@ -50,7 +51,7 @@ void motor::speed(int desiredSpeed){
 
   uint8_t cappedSpeed; // Value within arduino PWM range;
 
-  if(desiredSpeed > 255){
+  if(desiredSpeed > maxSpeed_){
     // check for overflow
 
     cappedSpeed = 255;

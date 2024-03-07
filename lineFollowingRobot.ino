@@ -28,8 +28,9 @@ const uint8_t rightWheelPin1 = 4;
 const uint8_t rightWheelPin2 = 3;
 const uint8_t rightPWMpin = 2;
 
-motorclass_h::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin);
-motorclass_h::motor right(rightWheelPin1, rightWheelPin2, rightPWMpin);
+uint8_t maxMotorSpeed = 40;
+motorclass_h::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin, maxMotorSpeed);
+motorclass_h::motor right(rightWheelPin1, rightWheelPin2, rightPWMpin, maxMotorSpeed);
 
 // Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
 const uint8_t fanPin = 12;
@@ -110,6 +111,11 @@ void setup() {
 
 
   // QTR sensors ////////////////////////////////////////////////////////////////////////////////
+  using PID_HPP_::qtr;
+  const uint8_t SensorCount = 8;
+  uint16_t sensorValues[SensorCount];
+  uint16_t position;  // 0-7000
+
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){  A0, A1, A2, A3, A4, A5, A6, A7 }, SensorCount);
   qtr.setEmitterPin(2);
