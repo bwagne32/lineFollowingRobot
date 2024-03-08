@@ -47,28 +47,27 @@ float turnRatio;
 
 int setpoint = 3500;  // sets target position for controller. Theoretically middle of bot
 
-// ******************************************************************************************************************
+// Functions prototypes //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void updateTime(); // 1st
-void calcPID(); // 2nd (includes output)
-void calcError(); // inside PID
-void calcIntegral(); // inside PID
-void calcDerivative(); // inside PID
-void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right); // 3rd
+// PID ////////////////////////////////////////////////////////////////
+void calcPID(motorclass_h::motor &left, motorclass_h::motor &right); // Takes in error and calculates P,I,and D values for desire output
+void calcError(motorclass_h::motor &left, motorclass_h::motor &right);  // Calculates difference from setpoint
+                                                                        // Includes protection from losing line
+                                                                        // inside calcPID
+void calcIntegral();  // PID integral calculation
+                      // Inside calcPID
+void calcDerivative(); // PID Derivative calculation
+                       // Inside calcPID
+void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right); // Calculates motor ratio for turning and sends output to motors
 
+// Helper functions ////////////////////////////////////////////////////////////////
+void updateTime(); // Updates controller time for calcIntegral and calcDerivative
+bool checkIfLost(); // checks sensor values to see if line is lost
+                    // Runs inside of calcError();
+// Misc ////////////////////////////////////////////////////////////////
+void killSwitch(bool&, motor, motor); // Locks program into infinite loop to let us retrieve the bot
 
-void killSwitch(bool &stop, motor &left, motor &right) {
-  while (stop) {  // There's some infinite loop protection so I have to fight it like this
-    left.brake();
-    right.brake();
-    right.outputToDrive();
-    left.outputToDrive();
-    digitalWrite(LED_BUILTIN, HIGH);
-    //Serial.print("dead");
-    delay(100000000);
-  }
-}
-
+// Main loop ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, uint8_t &maxMotorSpeed) {
   //Serial.println("car");
   
@@ -80,11 +79,10 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, 
   while (true) {
     updateTime();
     //if(timeDiff > 100){
-    calcPID();
+    calcPID(left,right);
     updateOutput(left,right);
     //delay(100);
   
-    
     if (stop)
       killSwitch(stop, left, right);
   }
@@ -93,8 +91,8 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, 
 
 // Functions //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void calcPID(){ // Runs through P code, I code, and D code and generates an output signal
-  calcError();
+void calcPID(motorclass_h::motor &left, motorclass_h::motor &right){ // Runs through P code, I code, and D code and generates an output signal
+  calcError(left, right);
   //Serial.println(error);
   calcIntegral();
   calcDerivative();
@@ -112,18 +110,25 @@ void calcPID(){ // Runs through P code, I code, and D code and generates an outp
     }
 } 
 
-void calcError(){
+void calcError(motorclass_h::motor &left, motorclass_h::motor &right){
   // Error calc ///////////////////////////////////////////////////////////////////
-    /*
-    //uint16_t posArray[5];
-    for(int i = 0; i < 5; i++)
-      position += qtr.readLineBlack(sensorValues);
-    position = position / 5;
-*/
+   
     position = qtr.readLineBlack(sensorValues);
-      //posArray[i] = qtr.readLineBlack(sensorValues);
+
+    while(checkIfLost()){ // Finding line again if lost
+      if(prevError1 > 0){       //Turn left if the line was to the left before
+        left.speed(0);
+        right.speed(3 * right.maxSpeed() >> 2);
+      }
+      else{// turn right
+        right.speed(0);
+        left.speed(3 * left.maxSpeed() >> 1);
+      }
+      left.outputToDrive();
+      right.outputToDrive();
+      position = qtr.readLineBlack(sensorValues);
+    }
     
-    //position = ;
     error = setpoint - position;
 } // inside PID
 
@@ -208,5 +213,27 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
     left.outputToDrive();
 }
 
+bool checkIfLost(){
+  return ((sensorValues[0]>=980) && 
+          (sensorValues[1]>=980) && 
+          (sensorValues[2]>=980) && 
+          (sensorValues[3]>=980) && 
+          (sensorValues[4]>=980) && 
+          (sensorValues[5]>=980) && 
+          (sensorValues[6]>=980) && 
+          (sensorValues[7]>=980)); };
+
+
+void killSwitch(bool &stop, motor &left, motor &right) {
+  while (stop) {  // There's some infinite loop protection so I have to fight it like this
+    left.brake();
+    right.brake();
+    right.outputToDrive();
+    left.outputToDrive();
+    digitalWrite(LED_BUILTIN, HIGH);
+    //Serial.print("dead");
+    delay(100000000);
+  }
+}
 
 #endif  // PID_HPP_
