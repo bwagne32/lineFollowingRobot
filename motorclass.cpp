@@ -54,7 +54,7 @@ void motor::speed(int desiredSpeed){
   if(desiredSpeed > maxSpeed_){
     // check for overflow
 
-    cappedSpeed = 255;
+    cappedSpeed = maxSpeed_;
 
   }else if (desiredSpeed < 0){
     // check for negative

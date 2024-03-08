@@ -21,9 +21,9 @@ uint16_t position;  // 0-7000
 int output = 0;   // The output value of the controller to be converted to a ratio for turning
 short error = 0;  // Setpoint minus measured value
 // *******************************************
-const float Kp = .2;  // Proportional constant
-const float Ki = .09;   // Integral constant
-const float Kd = .3;   // Derivative constant
+const float Kp = .2;  //  .2 //Proportional constant
+const float Ki = .09;  //.09 // Integral constant
+const float Kd = .4;  // .4// Derivative constant
 // *******************************************
 bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -69,10 +69,11 @@ void killSwitch(bool &stop, motor &left, motor &right) {
   }
 }
 
-void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) {
+void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, uint8_t &maxMotorSpeed) {
   //Serial.println("car");
   
-  
+  motorNominalSpeed= maxMotorSpeed;
+
   left.direction(true);
   right.direction(true);
 
@@ -81,7 +82,7 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right) 
     //if(timeDiff > 100){
     calcPID();
     updateOutput(left,right);
-    delay(100);
+    //delay(100);
   
     
     if (stop)
