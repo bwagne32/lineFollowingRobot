@@ -65,7 +65,7 @@ void updateTime(); // Updates controller time for calcIntegral and calcDerivativ
 bool checkIfLost(); // checks sensor values to see if line is lost
                     // Runs inside of calcError();
 // Misc ////////////////////////////////////////////////////////////////
-void killSwitch(bool&, motor, motor); // Locks program into infinite loop to let us retrieve the bot
+void killSwitch(bool&, motor&, motor&); // Locks program into infinite loop to let us retrieve the bot
 
 // Main loop ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, uint8_t &maxMotorSpeed) {

@@ -71,9 +71,8 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
-  //motorclass_h::motor_calibration *leftPtr = new motorclass_h::motor_calibration;//(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
-  //leftPtr->motor_calibration(&leftWheelPin1, &leftWheelPin2, &leftPWMpin);
-  //motorclass_h::motor_calibration rightCalibrate(&rightWheelPin1,&rightWheelPin2,&rightPWMpin);
+  motorclass_h::motor_calibration leftCalibrate(leftWheelPin1, leftWheelPin2, leftPWMpin);
+  motorclass_h::motor_calibration rightCalibrate(rightWheelPin1, rightWheelPin2, rightPWMpin);
 
   //Serial.begin(9600);
   // BLE ////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +119,7 @@ void setup() {
   qtr.setSensorPins((const uint8_t[]){  A0, A1, A2, A3, A4, A5, A6, A7 }, SensorCount);
   qtr.setEmitterPin(2);
 
-  delay(500);
+  delay(10000); // 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);  // turn on Arduino's LED to indicate we are in calibration mode
 
@@ -131,22 +130,22 @@ void setup() {
   // * 10 reads per calibrate() call = ~24 ms per calibrate() call.
   // Call calibrate() 400 times to make calibration take about 10 seconds.
   
-  for (uint16_t i = 0; i < 400; i++){
+  /*for (uint16_t i = 0; i < 400; i++){
     qtr.calibrate();
-  }
-  /*for (uint16_t i = 0; i < 200; i++)
+  }*/
+  for (uint16_t i = 0; i < 200; i++)
   {
-    left.drive(50);
-    right.drive(-50);
+    leftCalibrate.drive(50);
+    rightCalibrate.drive(-50);
     qtr.calibrate();
-    left.drive(-50);
-    right.drive(50);
+    leftCalibrate.drive(-50);
+    rightCalibrate.drive(50);
     qtr.calibrate();
   }
 
-  left.drive(0);
-  right.drive(0);
-*/
+  leftCalibrate.drive(0);
+  rightCalibrate.drive(0);
+
   digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
 
