@@ -71,8 +71,8 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
-  motorclass_h::motor_calibration leftCalibrate(leftWheelPin1, leftWheelPin2, leftPWMpin);
-  motorclass_h::motor_calibration rightCalibrate(rightWheelPin1, rightWheelPin2, rightPWMpin);
+  //motorclass_h::motor_calibration leftCalibrate(leftWheelPin1, leftWheelPin2, leftPWMpin);
+  //motorclass_h::motor_calibration rightCalibrate(rightWheelPin1, rightWheelPin2, rightPWMpin);
 
   //Serial.begin(9600);
   // BLE ////////////////////////////////////////////////////////////////////////////////
@@ -135,16 +135,16 @@ void setup() {
   }*/
   for (uint16_t i = 0; i < 200; i++)
   {
-    leftCalibrate.drive(50);
-    rightCalibrate.drive(-50);
+    //leftCalibrate.drive(50);
+    //rightCalibrate.drive(-50);
     qtr.calibrate();
-    leftCalibrate.drive(-50);
-    rightCalibrate.drive(50);
+    //leftCalibrate.drive(-50);
+    //rightCalibrate.drive(50);
     qtr.calibrate();
   }
 
-  leftCalibrate.drive(0);
-  rightCalibrate.drive(0);
+  //leftCalibrate.drive(0);
+  //rightCalibrate.drive(0);
 
   digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
@@ -193,7 +193,7 @@ void setup() {
 */
   //Serial.print("running on core ");
   //Serial.println(xPortGetCoreID());
-  Serial.println("ready");
+  //Serial.println("ready");
   xTaskCreatePinnedToCore(car, "PID control", 2048, nullptr, 2, NULL, core0);
   xTaskCreatePinnedToCore(comms, "BLE?", 2048, (void *)pCharacteristic, 2, NULL, core1);
 }

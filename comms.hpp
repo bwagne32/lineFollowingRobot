@@ -22,6 +22,7 @@ void loopComms(bool& stop, /*DShotRMT& motor01,*/ BLECharacteristic *pCharacteri
   long idk = 0;
   while(1){
     idk++;
+    idk--;
 
     
   }

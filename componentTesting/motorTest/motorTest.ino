@@ -55,7 +55,7 @@ void loop() {
       }
       else{
       left.drive(out);
-      right.drive(out);
+      //right.drive(out);
       }
       previousMillis = currentMillis;
   }

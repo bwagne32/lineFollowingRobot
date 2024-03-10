@@ -1,4 +1,5 @@
-#include <stdint.h>
+#include <cmath>
+//#include <stdint.h>
 // PID loop controls
 #ifndef PID_HPP_
 #define PID_HPP_
@@ -21,7 +22,7 @@ uint16_t position;  // 0-7000
 int output = 0;   // The output value of the controller to be converted to a ratio for turning
 short error = 0;  // Setpoint minus measured value
 // *******************************************
-const float Kp = .2;  //  .2 //Proportional constant
+const float Kp = .25;  //  .2 //Proportional constant
 const float Ki = .09;  //.09 // Integral constant
 const float Kd = .4;  // .4// Derivative constant
 // *******************************************
@@ -33,9 +34,9 @@ float dError = 0;
 float prevError1 = 0;
 float prevError2 = 0;
 
-int currentTime;
+int currentTime = 0;
 int previousTime = 0;
-int timeDiff;
+float timeDiff = 5;
 
 // Line follower Motor Control **************************************************************************************
 
@@ -61,15 +62,22 @@ void calcDerivative(); // PID Derivative calculation
 void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right); // Calculates motor ratio for turning and sends output to motors
 
 // Helper functions ////////////////////////////////////////////////////////////////
-void updateTime(); // Updates controller time for calcIntegral and calcDerivative
+//void updateTime(); // Updates controller time for calcIntegral and calcDerivative
 bool checkIfLost(); // checks sensor values to see if line is lost
                     // Runs inside of calcError();
 // Misc ////////////////////////////////////////////////////////////////
 void killSwitch(bool&, motor&, motor&); // Locks program into infinite loop to let us retrieve the bot
 
+
+
+
+
+
+
+
 // Main loop ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, uint8_t &maxMotorSpeed) {
-  //Serial.println("car");
+  ////Serial.println("car");
   
   motorNominalSpeed= maxMotorSpeed;
 
@@ -77,11 +85,19 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, 
   right.direction(true);
 
   while (true) {
-    updateTime();
-    //if(timeDiff > 100){
-    calcPID(left,right);
-    updateOutput(left,right);
-    //delay(100);
+    //updateTime();
+    ////Serial.println(timeDiff);
+    currentTime = millis();
+    if(currentTime - previousTime >= timeDiff){
+      calcPID(left,right);
+      //Serial.println(output);
+      ////Serial.println("After PID");
+      updateOutput(left,right);
+      //Serial.println("After out");
+      previousTime = currentTime;
+      //Serial.flush();
+    }
+    delay(1);
   
     if (stop)
       killSwitch(stop, left, right);
@@ -94,7 +110,7 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, 
 void calcPID(motorclass_h::motor &left, motorclass_h::motor &right){ // Runs through P code, I code, and D code and generates an output signal
   calcError(left, right);
   //Serial.println(error);
-  calcIntegral();
+  //calcIntegral();
   calcDerivative();
   ///// CALC. OUTPUT /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -110,31 +126,36 @@ void calcPID(motorclass_h::motor &left, motorclass_h::motor &right){ // Runs thr
     }
 } 
 
+
+
+
 void calcError(motorclass_h::motor &left, motorclass_h::motor &right){
   // Error calc ///////////////////////////////////////////////////////////////////
-   
+    //Serial.println("error");
     position = qtr.readLineBlack(sensorValues);
 
+/*
     while(checkIfLost()){ // Finding line again if lost
+      //Serial.println("lost line");
       if(prevError1 > 0){       //Turn left if the line was to the left before
         left.speed(0);
-        right.speed(3 * right.maxSpeed() >> 2);
+        right.speed(right.maxSpeed() >> 1); // multiply by 3 shift right 1 (divide by 2)
       }
       else{// turn right
         right.speed(0);
-        left.speed(3 * left.maxSpeed() >> 1);
+        left.speed(left.maxSpeed() >> 1);
       }
       left.outputToDrive();
       right.outputToDrive();
       position = qtr.readLineBlack(sensorValues);
-    }
-    
+    }*/
     error = setpoint - position;
 } // inside PID
 
 void calcIntegral(){
   ///// INTEGRAL ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Stop adding error for integral when output is clamped signs match for current error and accumulated error
+    //Serial.println("integral");
     if (clamp == 1 && ((error >= 0 && output >= 0) || (error <= 0 && output <= 0))) {
 
       iClamp = 1;  // variable to tell if we need to stop adding to iError
@@ -156,24 +177,32 @@ void calcIntegral(){
 } // inside PID
 
 void calcDerivative(){
+  //Serial.println("Derivative");
   ///// DERIVATIVE ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Calculate Derivative
-
     dError = (error - prevError2) / (2 * timeDiff * .01);
+
+    if(dError > 1000)
+      dError = 1000;
+    else if(dError < -1000)
+      dError = -1000;
+
     prevError2 = prevError1;
     prevError1 = error;
 } // inside PID
 
+/*
 void updateTime(){
   previousTime = currentTime;
   currentTime = millis();
-  timeDiff = currentTime - previousTime;
+  timeDiff = ceil(currentTime - previousTime);
 }
+*/
 
 void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
   ///// ROBOT TURNING //////////////////////////////////////////////////////////////////////////////////////////////////
     //  NEW CODE FOR LINE FOLLOWER ************************************************************************
-
+    //Serial.println("Output");
     // set motor direction and nominal speed (must be 8 bit integers)
     right.speed(motorNominalSpeed);
     left.speed(motorNominalSpeed);
@@ -201,7 +230,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio;
       calculatedTurnSpeed = motorNominalSpeed * turnRatio;
-
+      //Serial.println(turnRatio);
       // set speed of left motor to execute turn
       left.speed(calculatedTurnSpeed);
     }
@@ -231,7 +260,7 @@ void killSwitch(bool &stop, motor &left, motor &right) {
     right.outputToDrive();
     left.outputToDrive();
     digitalWrite(LED_BUILTIN, HIGH);
-    //Serial.print("dead");
+    ////Serial.print("dead");
     delay(100000000);
   }
 }
