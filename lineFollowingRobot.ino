@@ -28,7 +28,7 @@ const uint8_t rightWheelPin1 = 4;
 const uint8_t rightWheelPin2 = 3;
 const uint8_t rightPWMpin = 2;
 
-uint8_t maxMotorSpeed = 145; //60
+uint8_t maxMotorSpeed = 160; //60
 motorclass_h::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin, maxMotorSpeed);
 motorclass_h::motor right(rightWheelPin1, rightWheelPin2, rightPWMpin, maxMotorSpeed);
 

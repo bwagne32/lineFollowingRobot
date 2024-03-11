@@ -67,6 +67,11 @@ void motor::speed(int desiredSpeed){
     cappedSpeed = desiredSpeed;
   }
 
+  if(desiredSpeed < 0) // reverse
+    direction(0);
+  else
+    direction(1);
+    
   _PWM_value = cappedSpeed;
 
 }
