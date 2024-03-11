@@ -24,9 +24,9 @@ uint16_t position;  // 0-7000
 int output = 0;   // The output value of the controller to be converted to a ratio for turning
 short error = 0;  // Setpoint minus measured value
 // *******************************************
-const float Kp = 1.;  //  .4 //Proportional constant
-const float Ki = .001;  //.09 // Integral constant
-const float Kd = 6.5 ;  // 4.// Derivative constant
+const float Kp = 1.;  //  1 //Proportional constant
+const float Ki = .001;  //.001 // Integral constant
+const float Kd = 7. ;  // 6.5// Derivative constant
 // *******************************************
 bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -38,7 +38,7 @@ float prevError2 = 0;
 
 int currentTime = 0;
 int previousTime = 0;
-float timeDiff = 3;
+float timeDiff = 2;
 
 // Line follower Motor Control **************************************************************************************
 
@@ -113,14 +113,14 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, 
 void calcPID(motorclass_h::motor &left, motorclass_h::motor &right){ // Runs through P code, I code, and D code and generates an output signal
   calcError(left, right);
   //Serial.println(error);
-  calcIntegral();
+  //calcIntegral();
   calcDerivative();
   ///// CALC. OUTPUT /////////////////////////////////////////////////////////////////////////////////////////////////
 
     output = Kp * error + Ki * iError + Kd * dError;  // Calculate Output Command
 
     // Clamp output from 0 to 255 // For use with integrator clamping
-    if (output > 500 || output < -500) {
+    if (output > 300 || output < -300) {
       clamp = 1;
 
     } else {
@@ -222,7 +222,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       
       if(turnRatio > .6){
         right.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .4 * motorNominalSpeed));
+        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .2 * motorNominalSpeed));
         
         //right.speed(round(right.maxSpeed() * 1 / 2) * turnRatio);
         //left.speed(left.maxSpeed() * 1 / 2);
@@ -253,7 +253,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
 
       if(turnRatio > .6){
         left.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .4 * motorNominalSpeed));
+        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .2 * motorNominalSpeed));
         
         //left.speed(round(left.maxSpeed() * 1 / 2) * turnRatio);
         //right.speed(right.maxSpeed() * 1 / 2);
@@ -273,8 +273,8 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
         left.speed(calculatedTurnSpeed);
       }
     } else{
-      left.speed(motorNominalSpeed * .9);
-      right.speed(motorNominalSpeed * .9);
+      left.speed(motorNominalSpeed * .7);
+      right.speed(motorNominalSpeed * .7);
     }
 
 
@@ -295,7 +295,7 @@ bool checkIfLost(){
           (sensorValues[7]>=980)); };
 
 float turnCurve(const float& ratio, const uint8_t& speed){
-  return .9 * speed * sin(5 * ratio - 1) / (2 * ratio) + .5 * speed;
+  return .9 * speed * sin(5 * ratio - 1) / (2 * ratio) + .4 * speed;
 }
 
 
