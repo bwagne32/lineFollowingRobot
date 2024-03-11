@@ -22,9 +22,9 @@ uint16_t position;  // 0-7000
 int output = 0;   // The output value of the controller to be converted to a ratio for turning
 short error = 0;  // Setpoint minus measured value
 // *******************************************
-const float Kp = .3;  //  .2 //Proportional constant
+const float Kp = .4;  //  .2 //Proportional constant
 const float Ki = .09;  //.09 // Integral constant
-const float Kd = .8;  // .4// Derivative constant
+const float Kd = 2. ;  // .4// Derivative constant
 // *******************************************
 bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
