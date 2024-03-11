@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <cmath>
 //#include <stdint.h>
 // PID loop controls
@@ -22,9 +23,9 @@ uint16_t position;  // 0-7000
 int output = 0;   // The output value of the controller to be converted to a ratio for turning
 short error = 0;  // Setpoint minus measured value
 // *******************************************
-const float Kp = .4;  //  .2 //Proportional constant
-const float Ki = .09;  //.09 // Integral constant
-const float Kd = 2. ;  // .4// Derivative constant
+const float Kp = 1.;  //  .4 //Proportional constant
+const float Ki = .001;  //.09 // Integral constant
+const float Kd = 6.5 ;  // 4.// Derivative constant
 // *******************************************
 bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -110,7 +111,7 @@ void loopPID(bool &stop, motorclass_h::motor &left, motorclass_h::motor &right, 
 void calcPID(motorclass_h::motor &left, motorclass_h::motor &right){ // Runs through P code, I code, and D code and generates an output signal
   calcError(left, right);
   //Serial.println(error);
-  //calcIntegral();
+  calcIntegral();
   calcDerivative();
   ///// CALC. OUTPUT /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -216,12 +217,16 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
 
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio; // 0.-1.
-      //if(turnRatio > .8)
-      //  right
-      calculatedTurnSpeed = motorNominalSpeed * turnRatio;
+      if(turnRatio > .8){
+        right.speed(round(right.maxSpeed() * 2 / 3) * turnRatio);
+        left.speed(left.maxSpeed() * 2 / 3);
+      }
+      else{
+       calculatedTurnSpeed = motorNominalSpeed * turnRatio;
 
       // set speed of right motor to execute turn
-      right.speed(calculatedTurnSpeed);
+        right.speed(calculatedTurnSpeed);
+        }
 
     } else if (output > 0) {
       // if robot is right of line
@@ -231,10 +236,20 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
 
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio;
-      calculatedTurnSpeed = motorNominalSpeed * turnRatio;
-      //Serial.println(turnRatio);
-      // set speed of left motor to execute turn
-      left.speed(calculatedTurnSpeed);
+      
+      if(turnRatio > .8){
+        left.speed(round(left.maxSpeed() * 2 / 3) * turnRatio);
+        right.speed(right.maxSpeed() * 2 / 3);
+      }
+      else{
+        calculatedTurnSpeed = motorNominalSpeed * turnRatio;
+        //Serial.println(turnRatio);
+        // set speed of left motor to execute turn
+        left.speed(calculatedTurnSpeed);
+      }
+    } else{
+      left.speed(motorNominalSpeed * .9);
+      right.speed(motorNominalSpeed * .9);
     }
 
 
