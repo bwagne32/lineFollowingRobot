@@ -222,7 +222,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       
       if(turnRatio > .6){
         right.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
+        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .65 * motorNominalSpeed));
         
         //right.speed(round(right.maxSpeed() * 1 / 2) * turnRatio);
         //left.speed(left.maxSpeed() * 1 / 2);
@@ -253,7 +253,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
 
       if(turnRatio > .6){
         left.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
+        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .65 * motorNominalSpeed));
         
         //left.speed(round(left.maxSpeed() * 1 / 2) * turnRatio);
         //right.speed(right.maxSpeed() * 1 / 2);
@@ -295,7 +295,7 @@ bool checkIfLost(){
           (sensorValues[7]>=980)); };
 
 float turnCurve(const float& ratio, const uint8_t& speed){
-  return .9 * speed * sin(5 * ratio - 1) / (2 * ratio) + .1 * speed;
+  return 1.3 * speed * sin(5 * ratio - .5) / (2 * ratio) + .1 * speed;
 }
 
 
