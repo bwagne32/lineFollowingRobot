@@ -24,7 +24,7 @@ short error = 0;  // Setpoint minus measured value
 // *******************************************
 const float Kp = .3;  //  .2 //Proportional constant
 const float Ki = .09;  //.09 // Integral constant
-const float Kd = .5;  // .4// Derivative constant
+const float Kd = .8;  // .4// Derivative constant
 // *******************************************
 bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -36,7 +36,7 @@ float prevError2 = 0;
 
 int currentTime = 0;
 int previousTime = 0;
-float timeDiff = 5;
+float timeDiff = 3;
 
 // Line follower Motor Control **************************************************************************************
 
@@ -215,7 +215,9 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       sensingRatio = (-1 * output) / 1000.;
 
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
-      turnRatio = 1. - sensingRatio;
+      turnRatio = 1. - sensingRatio; // 0.-1.
+      //if(turnRatio > .8)
+      //  right
       calculatedTurnSpeed = motorNominalSpeed * turnRatio;
 
       // set speed of right motor to execute turn
