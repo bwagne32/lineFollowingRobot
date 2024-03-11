@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "Arduino.h"
 #include <cmath>
 //#include <stdint.h>
@@ -66,6 +67,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right); // Cal
 //void updateTime(); // Updates controller time for calcIntegral and calcDerivative
 bool checkIfLost(); // checks sensor values to see if line is lost
                     // Runs inside of calcError();
+float turnCurve(const float& ratio, const uint8_t& speed); // output turn curve
 // Misc ////////////////////////////////////////////////////////////////
 void killSwitch(bool&, motor&, motor&); // Locks program into infinite loop to let us retrieve the bot
 
@@ -217,14 +219,25 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
 
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio; // 0.-1.
-      if(turnRatio > .8){
+      
+      if(turnRatio > .6){
+        right.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
+        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .4 * motorNominalSpeed));
+        
+        //right.speed(round(right.maxSpeed() * 1 / 2) * turnRatio);
+        //left.speed(left.maxSpeed() * 1 / 2);
+      }
+      /*else if(turnRatio > .7){
         right.speed(round(right.maxSpeed() * 2 / 3) * turnRatio);
         left.speed(left.maxSpeed() * 2 / 3);
       }
+      else if(turnRatio > .6){
+        right.speed(round(right.maxSpeed() * 3 / 4) * turnRatio);
+        left.speed(left.maxSpeed() * 3 / 4);
+      }*/
       else{
        calculatedTurnSpeed = motorNominalSpeed * turnRatio;
-
-      // set speed of right motor to execute turn
+        // set speed of right motor to execute turn
         right.speed(calculatedTurnSpeed);
         }
 
@@ -237,10 +250,22 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio;
       
-      if(turnRatio > .8){
+
+      if(turnRatio > .6){
+        left.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
+        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .4 * motorNominalSpeed));
+        
+        //left.speed(round(left.maxSpeed() * 1 / 2) * turnRatio);
+        //right.speed(right.maxSpeed() * 1 / 2);
+      }
+      /*else if(turnRatio > .7){
         left.speed(round(left.maxSpeed() * 2 / 3) * turnRatio);
         right.speed(right.maxSpeed() * 2 / 3);
       }
+      else if(turnRatio > .6){
+        left.speed(round(left.maxSpeed() * 3 / 4) * turnRatio);
+        right.speed(right.maxSpeed() * 3 / 4);
+      }*/
       else{
         calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         //Serial.println(turnRatio);
@@ -268,6 +293,10 @@ bool checkIfLost(){
           (sensorValues[5]>=980) && 
           (sensorValues[6]>=980) && 
           (sensorValues[7]>=980)); };
+
+float turnCurve(const float& ratio, const uint8_t& speed){
+  return .9 * speed * sin(5 * ratio - 1) / (2 * ratio) + .5 * speed;
+}
 
 
 void killSwitch(bool &stop, motor &left, motor &right) {
