@@ -69,6 +69,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right); // Cal
 bool checkIfLost(); // checks sensor values to see if line is lost
                     // Runs inside of calcError();
 float turnCurve(const float& ratio, const uint8_t& speed); // output turn curve
+void updateOutputHelper(motorclass_h::motor &inner, motorclass_h::motor &outer) 
 // Misc ////////////////////////////////////////////////////////////////
 void killSwitch(bool&, motor&, motor&); // Locks program into infinite loop to let us retrieve the bot
 
@@ -212,7 +213,21 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
     left.speed(motorNominalSpeed);
 
 
+    
     if (output < 0) {
+      updateOutputHelper(right, left);
+    }
+    else if(output < 0){
+       updateOutputHelper(right, left);
+    }
+    else{
+      left.speed(motorNominalSpeed * .9);
+      right.speed(motorNominalSpeed * .9);
+    }
+
+    /*  
+    if (output < 0) {
+
       // if robot is left of line
 
       // Calculate sensing ratio
@@ -289,7 +304,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       right.speed(motorNominalSpeed * .9);
     }
 
-
+*/
     // Output to drive
 
     right.outputToDrive();
@@ -312,6 +327,41 @@ float turnCurve(const float& ratio, const uint8_t& speed){
   //return -2.4 * speed * sin(ratio) * sin(ratio) * sin(ratio) * sin(ratio) / ratio + speed; // I can't be bothed to use exponents
 }
 
+void updateOutputHelper(motorclass_h::motor &inner, motorclass_h::motor &outer){
+  // if robot is left of line
+
+      // Calculate sensing ratio
+      sensingRatio = (-1 * output) / 1000.;
+
+      // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
+      turnRatio = 1. - sensingRatio; // 0.-1.
+      
+
+
+      if(turnRatio > .5){
+        inner.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
+        outer.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
+        accelerationCounter = 0;
+      }
+        else if(turnRatio < .1){
+          if(accelerationCounter > 4){
+            outer.speed(motorNominalSpeed);
+            inner.speed(motorNominalSpeed);
+            accelerationCounter = 0;
+          }
+          else{
+            outer.speed(motorNominalSpeed * .75);
+            inner.speed(motorNominalSpeed * .75);
+            accelerationCounter++;
+          }
+      }
+      else{
+        calculatedTurnSpeed = motorNominalSpeed * turnRatio;
+        // set speed of right motor to execute turn
+        inner.speed(calculatedTurnSpeed);
+        accelerationCounter = 0;
+      }
+}
 
 void killSwitch(bool &stop, motor &left, motor &right) {
   while (stop) {  // There's some infinite loop protection so I have to fight it like this
