@@ -47,6 +47,7 @@ int calculatedTurnSpeed;
 
 float sensingRatio;
 float turnRatio;
+uint8_t accelerationCounter = 0;
 
 int setpoint = 3500;  // sets target position for controller. Theoretically middle of bot
 
@@ -225,15 +226,25 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       if(turnRatio > .5){
         right.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
         left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
+        accelerationCounter = 0;
       }
         else if(turnRatio < .1){
-        left.speed(motorNominalSpeed * .9);
-        right.speed(motorNominalSpeed * .9);
+          if(accelerationCounter > 4){
+            left.speed(motorNominalSpeed);
+            right.speed(motorNominalSpeed);
+            accelerationCounter = 0;
+          }
+          else{
+            left.speed(motorNominalSpeed * .75);
+            right.speed(motorNominalSpeed * .75);
+            accelerationCounter++;
+          }
       }
       else{
         calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         // set speed of right motor to execute turn
         right.speed(calculatedTurnSpeed);
+        accelerationCounter = 0;
       }
 
     } else if (output > 0) {
@@ -249,21 +260,31 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       if(turnRatio > .5){
         left.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
         right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
+        accelerationCounter = 0;
       }
       else if(turnRatio < .1){
-        left.speed(motorNominalSpeed * .9);
-        right.speed(motorNominalSpeed * .9);
+         if(accelerationCounter > 4){
+            left.speed(motorNominalSpeed);
+            right.speed(motorNominalSpeed);
+            accelerationCounter = 0;
+          }
+          else{
+            left.speed(motorNominalSpeed * .75);
+            right.speed(motorNominalSpeed * .75);
+            accelerationCounter++;
+          }
       }
       else{
         calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         //Serial.println(turnRatio);
         // set speed of left motor to execute turn
         left.speed(calculatedTurnSpeed);
+        accelerationCounter = 0;
       }
 
       
     } 
-      else{
+    else{
       left.speed(motorNominalSpeed * .9);
       right.speed(motorNominalSpeed * .9);
     }
