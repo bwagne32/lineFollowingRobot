@@ -222,16 +222,19 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       
 
 
-      //if(turnRatio > .6)
+      if(turnRatio > .5){
         right.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + 1.5 * motorNominalSpeed));
-
-/*
+        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
+      }
+        else if(turnRatio < .1){
+        left.speed(motorNominalSpeed * .9);
+        right.speed(motorNominalSpeed * .9);
+      }
       else{
         calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         // set speed of right motor to execute turn
         right.speed(calculatedTurnSpeed);
-      }*/
+      }
 
     } else if (output > 0) {
       // if robot is right of line
@@ -243,18 +246,24 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       turnRatio = 1. - sensingRatio;
       
 
-      //if(turnRatio > .5){
+      if(turnRatio > .5){
         left.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + 1.5 * motorNominalSpeed));
-        
-       /*
+        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
+      }
+      else if(turnRatio < .1){
+        left.speed(motorNominalSpeed * .9);
+        right.speed(motorNominalSpeed * .9);
+      }
       else{
         calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         //Serial.println(turnRatio);
         // set speed of left motor to execute turn
         left.speed(calculatedTurnSpeed);
-      }*/
-    } else{
+      }
+
+      
+    } 
+      else{
       left.speed(motorNominalSpeed * .9);
       right.speed(motorNominalSpeed * .9);
     }
@@ -278,7 +287,8 @@ bool checkIfLost(){
 
 float turnCurve(const float& ratio, const uint8_t& speed){
   //-2.4 * maxSpeed * (sin(x)^4 / x) + maxSpeed
-  return -2.4 * speed * sin(ratio) * sin(ratio) * sin(ratio) * sin(ratio) / ratio + speed; // I can't be bothed to use exponents
+  return - speed * ratio * ratio + speed;
+  //return -2.4 * speed * sin(ratio) * sin(ratio) * sin(ratio) * sin(ratio) / ratio + speed; // I can't be bothed to use exponents
 }
 
 
