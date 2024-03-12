@@ -24,9 +24,9 @@ uint16_t position;  // 0-7000
 int output = 0;   // The output value of the controller to be converted to a ratio for turning
 short error = 0;  // Setpoint minus measured value
 // *******************************************
-const float Kp = 1.;  //  1 //Proportional constant
-const float Ki = .001;  //.001 // Integral constant
-const float Kd = 7. ;  // 6.5// Derivative constant
+const float Kp = .75;  //  1 //Proportional constant
+const float Ki = .0001;  //.001 // Integral constant
+const float Kd = 7.5 ;  // 6.5// Derivative constant
 // *******************************************
 bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -120,7 +120,7 @@ void calcPID(motorclass_h::motor &left, motorclass_h::motor &right){ // Runs thr
     output = Kp * error + Ki * iError + Kd * dError;  // Calculate Output Command
 
     // Clamp output from 0 to 255 // For use with integrator clamping
-    if (output > 300 || output < -300) {
+    if (output > 100 || output < -100) {
       clamp = 1;
 
     } else {
@@ -220,26 +220,18 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio; // 0.-1.
       
-      if(turnRatio > .6){
+
+
+      //if(turnRatio > .6)
         right.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .65 * motorNominalSpeed));
-        
-        //right.speed(round(right.maxSpeed() * 1 / 2) * turnRatio);
-        //left.speed(left.maxSpeed() * 1 / 2);
-      }
-      /*else if(turnRatio > .7){
-        right.speed(round(right.maxSpeed() * 2 / 3) * turnRatio);
-        left.speed(left.maxSpeed() * 2 / 3);
-      }
-      else if(turnRatio > .6){
-        right.speed(round(right.maxSpeed() * 3 / 4) * turnRatio);
-        left.speed(left.maxSpeed() * 3 / 4);
-      }*/
+        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + 1.5 * motorNominalSpeed));
+
+/*
       else{
-       calculatedTurnSpeed = motorNominalSpeed * turnRatio;
+        calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         // set speed of right motor to execute turn
         right.speed(calculatedTurnSpeed);
-        }
+      }*/
 
     } else if (output > 0) {
       // if robot is right of line
@@ -251,30 +243,20 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       turnRatio = 1. - sensingRatio;
       
 
-      if(turnRatio > .6){
+      //if(turnRatio > .5){
         left.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .65 * motorNominalSpeed));
+        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + 1.5 * motorNominalSpeed));
         
-        //left.speed(round(left.maxSpeed() * 1 / 2) * turnRatio);
-        //right.speed(right.maxSpeed() * 1 / 2);
-      }
-      /*else if(turnRatio > .7){
-        left.speed(round(left.maxSpeed() * 2 / 3) * turnRatio);
-        right.speed(right.maxSpeed() * 2 / 3);
-      }
-      else if(turnRatio > .6){
-        left.speed(round(left.maxSpeed() * 3 / 4) * turnRatio);
-        right.speed(right.maxSpeed() * 3 / 4);
-      }*/
+       /*
       else{
         calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         //Serial.println(turnRatio);
         // set speed of left motor to execute turn
         left.speed(calculatedTurnSpeed);
-      }
+      }*/
     } else{
-      left.speed(motorNominalSpeed * .7);
-      right.speed(motorNominalSpeed * .7);
+      left.speed(motorNominalSpeed * .9);
+      right.speed(motorNominalSpeed * .9);
     }
 
 
@@ -295,7 +277,8 @@ bool checkIfLost(){
           (sensorValues[7]>=980)); };
 
 float turnCurve(const float& ratio, const uint8_t& speed){
-  return 1.3 * speed * sin(5 * ratio - .5) / (2 * ratio) + .1 * speed;
+  //-2.4 * maxSpeed * (sin(x)^4 / x) + maxSpeed
+  return -2.4 * speed * sin(ratio) * sin(ratio) * sin(ratio) * sin(ratio) / ratio + speed; // I can't be bothed to use exponents
 }
 
 
