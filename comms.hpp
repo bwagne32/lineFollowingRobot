@@ -16,14 +16,12 @@ void killSwitch(bool &stop/*, DShotRMT& motor01*/){
     } 
 }
 
-void loopComms(bool& stop, /*DShotRMT& motor01,*/ BLECharacteristic *pCharacteristic){
+void loopComms(bool& stop /*DShotRMT& motor01, BLECharacteristic *pCharacteristic*/){
   //motor01.sendThrottleValue(50); // idk what to set this to. Will figure out with testing
   //Serial.println("comms");
-  long idk = 0;
   while(1){
-    idk++;
-    idk--;
-
+    //motor01.sendThrottleValue(100);
+    delay(10);
     
   }
 }

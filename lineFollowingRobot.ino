@@ -13,10 +13,11 @@
 #include "DShotRMT.h"
 
 #include <QTRSensors.h>
+/*
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
-
+*/
 
 
 // Motors //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,7 +29,7 @@ const uint8_t rightWheelPin1 = 4;
 const uint8_t rightWheelPin2 = 3;
 const uint8_t rightPWMpin = 2;
 
-uint8_t maxMotorSpeed = 185; //60
+uint8_t maxMotorSpeed = 255; //60
 motorclass_h::motor left(leftWheelPin1, leftWheelPin2, leftPWMpin, maxMotorSpeed);
 motorclass_h::motor right(rightWheelPin1, rightWheelPin2, rightPWMpin, maxMotorSpeed);
 
@@ -48,6 +49,7 @@ bool stop = false;
 
 
 // BLE stuff ////////////////////////////////////////////////////////////////////////////////
+/*
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
@@ -68,7 +70,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         }
       }
     }
-};
+};*/
 
 void setup() {
   //motorclass_h::motor_calibration leftCalibrate(leftWheelPin1, leftWheelPin2, leftPWMpin);
@@ -76,7 +78,7 @@ void setup() {
 
   //Serial.begin(9600);
   // BLE ////////////////////////////////////////////////////////////////////////////////
-  
+  /*
   BLEDevice::init("MyESP32");
   BLEServer *pServer = BLEDevice::createServer();
 
@@ -95,6 +97,7 @@ void setup() {
 
   BLEAdvertising *pAdvertising = pServer->getAdvertising();
   pAdvertising->start();
+  */
 
   // Motors ////////////////////////////////////////////////////////////////////////////////
   pinMode(leftWheelPin1, OUTPUT);
@@ -119,7 +122,7 @@ void setup() {
   qtr.setSensorPins((const uint8_t[]){  A0, A1, A2, A3, A4, A5, A6, A7 }, SensorCount);
   qtr.setEmitterPin(2);
 
-  delay(10000); // 
+  delay(100); // 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);  // turn on Arduino's LED to indicate we are in calibration mode
 
@@ -195,7 +198,7 @@ void setup() {
   //Serial.println(xPortGetCoreID());
   //Serial.println("ready");
   xTaskCreatePinnedToCore(car, "PID control", 2048, nullptr, 2, NULL, core0);
-  xTaskCreatePinnedToCore(comms, "BLE?", 2048, (void *)pCharacteristic, 2, NULL, core1);
+  xTaskCreatePinnedToCore(comms, "BLE?", 2048, nullptr /*(void *)pCharacteristic*/, 2, NULL, core1);
 }
 
 
@@ -210,7 +213,7 @@ void car(void *pvParameters){ // reads inputs, calculates PD control, and sends 
 
 
 void comms(void *pvParameters) { // sends communication info over BLE
-    COMMS_HPP_::loopComms(stop, /*motor01,*/ (BLECharacteristic*)pvParameters);
+    COMMS_HPP_::loopComms(stop /*motor01, (BLECharacteristic*)pvParameters*/);
 }
 
 

@@ -3,7 +3,7 @@
 // Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
 const uint8_t fanPin = 12;
 const uint8_t fanEnablePin = 8;
-const auto DSHOT_MODE = DSHOT300;
+const auto DSHOT_MODE = DSHOT150;
 const auto FAILSAFE_THROTTLE = 999;
 const auto INITIAL_THROTTLE = 48;
 
@@ -26,7 +26,7 @@ void setup() {
 
   digitalWrite(fanEnablePin, HIGH);
   motor01.begin(DSHOT_MODE);
-
+  motor01.sendThrottleValue(INITIAL_THROTTLE);
 }
 
 void loop() {

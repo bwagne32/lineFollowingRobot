@@ -1,51 +1,61 @@
 #include "DShotRMT.h"
 
-// Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
-const uint8_t fanPin = 12;
-const uint8_t fanEnablePin = 8;
-const auto DSHOT_MODE = DSHOT300;
-const auto FAILSAFE_THROTTLE = 999;
-const auto INITIAL_THROTTLE = 48;
+/*
 
-short out = 0;
+redefine DSHOT_PORT if you want to change the default PORT
 
-unsigned long currentMillis = 0;
-unsigned long previousMillis = 0;
-uint16_t inputTime = 1000;
+Defaults
+UNO: PORTD, available pins 0-7 (D0-D7)
+Leonardo: PORTB, available pins 4-7 (D8-D11)
 
-// Initialize a DShotRMT object for the motor
-DShotRMT motor01(fanPin, RMT_CHANNEL_0);
+e.g.
+#define DSHOT_PORT PORTD
+*/
+DShot esc1(DShot::Mode::DSHOT150);
+
+uint16_t throttle = 600;
+uint16_t target = 100;
+const uint8_t escEnable = 5;
+const uint8_t escPin = 7;
+//const uint8_t enableControl = 8;
+//bool enabled = 0;
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("Ready");
-  pinMode(fanPin, OUTPUT);
-  pinMode(fanEnablePin, OUTPUT);
-
-
-  digitalWrite(fanEnablePin, HIGH);
-  motor01.begin(DSHOT_MODE);
-  while(!Serial.available()){
-    Serial.println("Initial input: ");
-    delay(10000);
-  }
-  out = Serial.readStringUntil('\n').toInt();
-  motor01.sendThrottleValue(out);
+  //Serial.begin(9600);
+  pinMode(escEnable, OUTPUT);
+  digitalWrite(escEnable, HIGH);
+  // Notice, all pins must be connected to same PORT
+  esc1.attach(escPin);  
+  esc1.setThrottle(throttle);
 }
 
 void loop() {
-  if(currentMillis - previousMillis >= inputTime){
-      if(Serial.available())
-        out = readThrottle();
-      Serial.print("OUT: ");
-      Serial.println(out);
-      motor01.sendThrottleValue(out);
-      previousMillis = currentMillis;
-  }
-  
-  currentMillis = millis();
-}
+    //delay(20);
 
-uint16_t readThrottle(){
-  return Serial.readStringUntil('\n').toInt();
+  esc1.setThrottle(throttle);
+  
+/*
+
+  if (Serial.available()>0){
+    target = Serial.parseInt();
+    if (target>2047)
+      target = 2047;
+    Serial.print(target, HEX);
+    Serial.print("\t");
+  }
+  if (throttle<48){
+    throttle = 48;
+  }
+  if (target<=48){
+    esc1.setThrottle(target);
+  }else{
+    if (target>throttle){
+      throttle ++;
+      esc1.setThrottle(throttle);
+    }else if (target<throttle){
+      throttle --;
+      esc1.setThrottle(throttle);
+    }
+  }*/
+  delay(10000);
 }

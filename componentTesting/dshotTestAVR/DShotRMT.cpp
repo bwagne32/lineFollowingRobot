@@ -1,264 +1,293 @@
-//
-// Name:        DShotRMT.cpp
-// Created: 	20.03.2021 00:49:15
-// Author:  	derdoktor667
-//
-
+#include "Arduino.h"
 #include "DShotRMT.h"
 
-// Constructor that takes gpio and rmtChannel as arguments
-DShotRMT::DShotRMT(gpio_num_t gpio, rmt_channel_t rmtChannel)
-{
-    // Initialize the dshot_config structure with the arguments passed to the constructor
-    dshot_config.gpio_num = gpio;
-    dshot_config.pin_num = static_cast<uint8_t>(gpio);
-    dshot_config.rmt_channel = rmtChannel;
-    dshot_config.mem_block_num = static_cast<uint8_t>(RMT_CHANNEL_MAX - static_cast<uint8_t>(rmtChannel));
 
-    // Create an empty packet using the DSHOT_NULL_PACKET and the buildTxRmtItem function
-    buildTxRmtItem(DSHOT_NULL_PACKET);
+// Each item contains the bit of the port
+// Pins that are not attached will always be 1
+// This is to offload the Off pattern calculation during bit send
+static uint8_t dShotBits[16];
+
+// Denote which pin is attached to dShot
+static uint8_t dShotPins = 0;
+
+// Mode: 600/300/150
+static enum DShot::Mode dShotMode = DShot::Mode::DSHOT600;
+
+
+#define NOP	"NOP\n"
+#define NOP2 NOP NOP
+#define NOP4 NOP2 NOP2
+#define NOP8 NOP4 NOP4
+
+/*
+	DSHOT600 implementation
+	For 16MHz CPU,
+	0: 10 cycle ON, 17 cycle OFF
+	1: 20 cycle ON, 7 cycle OFF
+	Total 27 cycle each bit
+*/
+static inline void sendData(){
+	noInterrupts();
+	switch (dShotMode) {
+	case DShot::Mode::DSHOT600:
+	default:
+		asm(
+		// For i = 0 to 15:
+		"LDI	r23,	0\n"
+		// Set High for every attached pins
+		// DSHOT_PORT |= dShotPins;
+		"IN	r25,	%0\n"
+		"_for_loop_0:\n"
+		"OR	r25,	%1\n"
+		// Wait 7 cycles (7 - 6 = 1)
+		"NOP\n"
+
+		"OUT	%0,	r25\n"
+		// Wait 10 cycles (10 - 4 = 6)
+		NOP4
+		NOP2
+		// Set Low for low bits only
+		//DSHOT_PORT &= dShotBits[i];
+		"LD	r24,	Z+\n"
+		"AND	r25,	r24\n"
+		"OUT	%0,	r25\n"
+		// Wait 10 cycles (10 - 2 = 8)
+		NOP8
+		// Turn off everything
+		// DSHOT_PORT &= ~dShotPins;
+		"AND	r25,	%2\n"
+		"OUT	%0,	r25\n"
+		// Add to i (tmp_reg)
+		"INC	r23\n"
+		"CPI	r23,	16\n"
+		"BRLO	_for_loop_0\n"
+		// 7 cycles to next bit (4 to add to i and branch, 2 to turn on), no wait
+		:
+		: "I" (_SFR_IO_ADDR(DSHOT_PORT)), "r" (dShotPins), "r" (~dShotPins), "z" (dShotBits)
+		: "r25", "r24", "r23"
+		);
+		break;
+	case DShot::Mode::DSHOT300:
+		asm(
+		// For i = 0 to 15:
+		"LDI	r23,	0\n"
+		// Set High for every attached pins
+		// DSHOT_PORT |= dShotPins;
+		"IN	r25,	%0\n"
+		"_for_loop_1:\n"
+		"OR	r25,	%1\n"
+		// Wait 14 cycles (14 - 6 = 8)
+
+		// 1 + 3 * N //
+		"LDI	r26,	2\n"		// 1 // set N
+		"_sleep_loop_1_1:\n"
+		"DEC	r26\n"			// 1 //
+		"BRNE	_sleep_loop_1_1\n"	// 2 //
+		"NOP\n"				// 1 // BRNE on skip uses only 1 cycle, not 2
+		// 1 + 3 * N //
+		"NOP\n"
+
+		"OUT	%0,	r25\n"
+		// Wait 20 cycles (20 - 4 = 16)
+
+		// 1 + 3 * N //
+		"LDI	r26,	5\n"		// 1 // set N
+		"_sleep_loop_1_2:\n"
+		"DEC	r26\n"			// 1 //
+		"BRNE	_sleep_loop_1_2\n"	// 2 //
+		"NOP\n"				// 1 // BRNE on skip uses only 1 cycle, not 2
+		// 1 + 3 * N //
+
+		// Set Low for low bits only
+		//DSHOT_PORT &= dShotBits[i];
+		"LD	r24,	Z+\n"	// 2 //
+		"AND	r25,	r24\n"
+		"OUT	%0,	r25\n"
+		// Wait 20 cycles (20 - 2 = 18)
+
+		// 1 + 3 * N //
+		"LDI	r26,	5\n"		// 1 // set N
+		"_sleep_loop_1_3:\n"
+		"DEC	r26\n"			// 1 //
+		"BRNE	_sleep_loop_1_3\n"	// 2 //
+		"NOP\n"				// 1 // BRNE on skip uses only 1 cycle, not 2
+		// 1 + 3 * N //
+
+		"NOP\n"
+		"NOP\n"
+		// Turn off everything
+		// DSHOT_PORT &= ~dShotPins;
+		"AND	r25,	%2\n"
+		"OUT	%0,	r25\n"
+		// Add to i (tmp_reg)
+		"INC	r23\n"
+		"CPI	r23,	16\n"
+		"BRLO	_for_loop_1\n"
+		// 7 cycles to next bit (4 to add to i and branch, 2 to turn on), no wait
+		:
+		: "I" (_SFR_IO_ADDR(DSHOT_PORT)), "r" (dShotPins), "r" (~dShotPins), "z" (dShotBits)
+		: "r25", "r24", "r23"
+		);
+		break;
+	case DShot::Mode::DSHOT150:
+		asm(
+		// For i = 0 to 15:
+		"LDI	r23,	0\n"
+		// Set High for every attached pins
+		// DSHOT_PORT |= dShotPins;
+		"IN	r25,	%0\n"
+
+		"_for_loop_2:\n"
+		"OR	r25,	%1\n"
+		// Wait 28 cucles (28 - 6 = 22)
+
+		// 1 + 3 * N //
+		"LDI	r26,	7\n"		// 1 // set N
+		"_sleep_loop_2_1:\n"
+		"DEC	r26\n"			// 1 //
+		"BRNE	_sleep_loop_2_1\n"	// 2 //
+		"NOP\n"				// 1 // BRNE on skip uses only 1 cycle, not 2
+		// 1 + 3 * N //
+
+		"OUT	%0,	r25\n"
+		// Wait 40 cycles (40 - 4 = 36)
+
+		// 1 + 3 * N //
+		"LDI	r26,	11\n"		// 1 // set N
+		"_sleep_loop_2_2:\n"
+		"DEC	r26\n"			// 1 //
+		"BRNE	_sleep_loop_2_2\n"	// 2 //
+		"NOP\n"				// 1 // BRNE on skip uses only 1 cycle, not 2
+		// 1 + 3 * N //
+
+		"NOP\n"
+		"NOP\n"
+
+		// Set Low for low bits only
+		//DSHOT_PORT &= dShotBits[i];
+		"LD	r24,	Z+\n"
+		"AND	r25,	r24\n"
+		"OUT	%0,	r25\n"
+		// Wait 40 cycles (40 - 2 = 38)
+
+		// 1 + 3 * N //
+		"LDI	r26,	11\n"		// 1 // set N
+		"_sleep_loop_2_3:\n"
+		"DEC	r26\n"			// 1 //
+		"BRNE	_sleep_loop_2_3\n"	// 2 //
+		"NOP\n"				// 1 // BRNE on skip uses only 1 cycle, not 2
+		// 1 + 3 * N //
+
+		"NOP\n"
+		"NOP\n"
+		"NOP\n"
+		"NOP\n"
+
+		// Turn off everything
+		// DSHOT_PORT &= ~dShotPins;
+		"AND	r25,	%2\n"
+		"OUT	%0,	r25\n"
+		// Add to i (tmp_reg)
+		"INC	r23\n"
+		"CPI	r23,	16\n"
+		"BRLO	_for_loop_2\n"
+		// 7 cycles to next bit (4 to add to i and branch, 2 to turn on), no wait
+		:
+		: "I" (_SFR_IO_ADDR(DSHOT_PORT)), "r" (dShotPins), "r" (~dShotPins), "z" (dShotBits)
+		: "r25", "r24", "r23", "r26"
+		);
+		break;
+	}
+	interrupts();
 }
 
-// Constructor that takes pin and channel as arguments
-DShotRMT::DShotRMT(uint8_t pin, uint8_t channel)
-{
-    // Initialize the dshot_config structure with the arguments passed to the constructor
-    dshot_config.gpio_num = static_cast<gpio_num_t>(pin);
-    dshot_config.pin_num = pin;
-    dshot_config.rmt_channel = static_cast<rmt_channel_t>(channel);
-    dshot_config.mem_block_num = RMT_CHANNEL_MAX - channel;
+static boolean timerActive = false;
+/*
+  Generated by:
+  http://www.8bit-era.cz/arduino-timer-interrupts-calculator.html
+  1000 Hz Update rate
+*/
+static void initISR(){
+cli(); // stop interrupts
+TCCR1A = 0; // set entire TCCR1A register to 0
+TCCR1B = 0; // same for TCCR1B
+TCNT1  = 0; // initialize counter value to 0
+// set compare match register for 500 Hz increments
+OCR1A = 31999; // = 16000000 / (1 * 500) - 1 (must be <65536)
+// turn on CTC mode
+TCCR1B |= (1 << WGM12);
+// Set CS12, CS11 and CS10 bits for 1 prescaler
+TCCR1B |= (0 << CS12) | (0 << CS11) | (1 << CS10);
+// enable timer compare interrupt
+TIMSK1 |= (1 << OCIE1A);
+	timerActive = true;
+	for (byte i=0; i<16; i++){
+		dShotBits[i] = 0;
+	}
+	dShotPins = 0;
 
-    // Create an empty packet using the DSHOT_NULL_PACKET and the buildTxRmtItem function
-    buildTxRmtItem(DSHOT_NULL_PACKET);
+	sei(); // allow interrupts
 }
 
-DShotRMT::~DShotRMT()
-{
-    // Uninstall the RMT driver
-    rmt_driver_uninstall(dshot_config.rmt_channel);
+static boolean isTimerActive(){
+  return timerActive;
 }
 
-DShotRMT::DShotRMT(DShotRMT const &)
-{
-    // ...write me
+ISR(TIMER1_COMPA_vect){
+   sendData();
 }
 
-bool DShotRMT::begin(dshot_mode_t dshot_mode, bool is_bidirectional)
-{
-    // Set DShot configuration parameters based on input parameters
-    dshot_config.mode = dshot_mode;
-    dshot_config.clk_div = DSHOT_CLK_DIVIDER;
-    dshot_config.name_str = dshot_mode_name[dshot_mode];
-    dshot_config.is_bidirectional = is_bidirectional;
+/*
+  Prepare data packet, attach 0 to telemetry bit, and calculate CRC
+  throttle: 11-bit data
+*/
+static inline uint16_t createPacket(uint16_t throttle){
+  uint8_t csum = 0;
+  throttle <<= 1;
+	// Indicate as command if less than 48
+	if (throttle < 48 && throttle > 0)
+		throttle |= 1;
+  uint16_t csum_data = throttle;
+  for (byte i=0; i<3; i++){
+    csum ^= csum_data;
+    csum_data >>= 4;
+  }
+  csum &= 0xf;
+  return (throttle<<4)|csum;
+}
 
-    // Set timing parameters based on selected DShot mode
-    switch (dshot_config.mode)
-    {
-    case DSHOT150:
-        dshot_config.ticks_per_bit = 64;
-        dshot_config.ticks_zero_high = 24;
-        dshot_config.ticks_one_high = 48;
-        break;
+/****************** end of static functions *******************/
 
-    case DSHOT300:
-        dshot_config.ticks_per_bit = 32;
-        dshot_config.ticks_zero_high = 12;
-        dshot_config.ticks_one_high = 24;
-        break;
+DShot::DShot(const enum Mode mode){
+    dShotMode = mode;
+}
 
-    case DSHOT600:
-        dshot_config.ticks_per_bit = 16;
-        dshot_config.ticks_zero_high = 6;
-        dshot_config.ticks_one_high = 12;
-        break;
+void DShot::attach(uint8_t pin){
+  this->_packet = 0;
+  this->_pinMask = digitalPinToBitMask(pin);
+  pinMode(pin, OUTPUT);
+  if (!isTimerActive()){
+    initISR();
+  }
+  dShotPins |= this->_pinMask;
+}
 
-    case DSHOT1200:
-        dshot_config.ticks_per_bit = 8;
-        dshot_config.ticks_zero_high = 3;
-        dshot_config.ticks_one_high = 6;
-        break;
+/*
+  Set the throttle value and prepare the data packet and store
+  throttle: 11-bit data
+*/
+uint16_t DShot::setThrottle(uint16_t throttle){
+  this->_throttle = throttle;
 
-    // Default case to handle invalid input
-    default:
-        dshot_config.ticks_per_bit = 0;
-        dshot_config.ticks_zero_high = 0;
-        dshot_config.ticks_one_high = 0;
-        break;
-    }
-
-    // Calculate low signal timing
-    dshot_config.ticks_zero_low = (dshot_config.ticks_per_bit - dshot_config.ticks_zero_high);
-    dshot_config.ticks_one_low = (dshot_config.ticks_per_bit - dshot_config.ticks_one_high);
-
-    // Set up RMT configuration for DShot transmission
-    dshot_tx_rmt_config.rmt_mode = RMT_MODE_TX;
-    dshot_tx_rmt_config.channel = dshot_config.rmt_channel;
-    dshot_tx_rmt_config.gpio_num = dshot_config.gpio_num;
-    dshot_tx_rmt_config.mem_block_num = dshot_config.mem_block_num;
-    dshot_tx_rmt_config.clk_div = dshot_config.clk_div;
-    dshot_tx_rmt_config.tx_config.loop_en = false;
-    dshot_tx_rmt_config.tx_config.carrier_en = false;
-    dshot_tx_rmt_config.tx_config.idle_output_en = true;
-
-    // Set idle level for RMT transmission based on input parameter
-    if (dshot_config.is_bidirectional)
-    {
-        dshot_tx_rmt_config.tx_config.idle_level = RMT_IDLE_LEVEL_HIGH;
-    }
+  // TODO: This part can be further optimized when combine with create packet
+  this->_packet = createPacket(throttle);
+  uint16_t mask = 0x8000;
+  for (byte i=0; i<16; i++){
+    if (this->_packet & mask)
+      dShotBits[i] |= this->_pinMask;
     else
-    {
-        dshot_tx_rmt_config.tx_config.idle_level = RMT_IDLE_LEVEL_LOW;
-    }
-
-    // Set up selected DShot mode
-    rmt_config(&dshot_tx_rmt_config);
-
-    // Install RMT driver and return result
-    return rmt_driver_install(dshot_tx_rmt_config.channel, 0, 0);
-}
-
-// Define a function to send a DShot command over an RMT interface to control a brushless motor's speed.
-void DShotRMT::sendThrottleValue(uint16_t throttle_value)
-{
-    dshot_packet_t dshot_rmt_packet = {};
-
-    // Check if the throttle value is less than the minimum allowed value for the DShot protocol.
-    if (throttle_value < DSHOT_THROTTLE_MIN)
-    {
-        throttle_value = DSHOT_THROTTLE_MIN;
-    }
-
-    // Check if the throttle value is greater than the maximum allowed value for the DShot protocol.
-    if (throttle_value > DSHOT_THROTTLE_MAX)
-    {
-        throttle_value = DSHOT_THROTTLE_MAX;
-    }
-
-    dshot_rmt_packet.throttle_value = throttle_value;
-
-    // Telemetric using additional pin on the ESC is not supported.
-    dshot_rmt_packet.telemetric_request = NO_TELEMETRIC;
-
-    // Calculate the checksum for the DShot packet using the calculateCRC function.
-    dshot_rmt_packet.checksum = calculateCRC(dshot_rmt_packet);
-
-    // Send the DShot packet over the RMT interface to control the motor's speed.
-    sendRmtPaket(dshot_rmt_packet);
-}
-
-// This method builds the RMT data transmission sequence for the DShot protocol
-rmt_item32_t *DShotRMT::buildTxRmtItem(uint16_t parsed_packet)
-{
-    // Check if DShot is set to bidirectional mode
-    if (dshot_config.is_bidirectional)
-    {
-        // If bidirectional, invert the high/low bits
-        for (int i = 0; i < DSHOT_PAUSE_BIT; i++, parsed_packet <<= 1)
-        {
-            if (parsed_packet & 0b1000000000000000)
-            {
-                // Set RMT item for a logic high signal
-                dshot_tx_rmt_item[i].duration0 = dshot_config.ticks_one_low;
-                dshot_tx_rmt_item[i].duration1 = dshot_config.ticks_one_high;
-            }
-            else
-            {
-                // Set RMT item for a logic low signal
-                dshot_tx_rmt_item[i].duration0 = dshot_config.ticks_zero_low;
-                dshot_tx_rmt_item[i].duration1 = dshot_config.ticks_zero_high;
-            }
-
-            // Set level of RMT item
-            dshot_tx_rmt_item[i].level0 = 0;
-            dshot_tx_rmt_item[i].level1 = 1;
-        }
-    }
-    else
-    {
-        // If not bidirectional, set the RMT items as usual
-        for (int i = 0; i < DSHOT_PAUSE_BIT; i++, parsed_packet <<= 1)
-        {
-            if (parsed_packet & 0b1000000000000000)
-            {
-                // Set RMT item for a logic high signal
-                dshot_tx_rmt_item[i].duration0 = dshot_config.ticks_one_high;
-                dshot_tx_rmt_item[i].duration1 = dshot_config.ticks_one_low;
-            }
-            else
-            {
-                // Set RMT item for a logic low signal
-                dshot_tx_rmt_item[i].duration0 = dshot_config.ticks_zero_high;
-                dshot_tx_rmt_item[i].duration1 = dshot_config.ticks_zero_low;
-            }
-
-            // Set level of RMT item
-            dshot_tx_rmt_item[i].level0 = 1;
-            dshot_tx_rmt_item[i].level1 = 0;
-        }
-    }
-
-    // Set end marker for each frame
-    if (dshot_config.is_bidirectional)
-    {
-        dshot_tx_rmt_item[DSHOT_PAUSE_BIT].level0 = 1;
-        dshot_tx_rmt_item[DSHOT_PAUSE_BIT].level1 = 0;
-    }
-    else
-    {
-        dshot_tx_rmt_item[DSHOT_PAUSE_BIT].level0 = 0;
-        dshot_tx_rmt_item[DSHOT_PAUSE_BIT].level1 = 1;
-    }
-
-    // Add packet seperator aka DShot Pause.
-    dshot_tx_rmt_item[DSHOT_PAUSE_BIT].duration1 = DSHOT_PAUSE;
-
-    // Return the rmt_item
-    return dshot_tx_rmt_item;
-}
-
-// Calculates a CRC value for a DShot digital control signal packet
-uint16_t DShotRMT::calculateCRC(const dshot_packet_t &dshot_packet)
-{
-    uint16_t crc;
-
-    // Combine the throttle value and telemetric request flag into a 16-bit packet value
-    const uint16_t packet = (dshot_packet.throttle_value << 1) | dshot_packet.telemetric_request;
-
-    // Calculate the CRC value using different bitwise operations depending on the DShot configuration
-    if (dshot_config.is_bidirectional)
-    {
-        // Bidirectional configuration: perform a bitwise negation of the result of XORing the packet with its right-shifted values by 4 and 8 bits,
-        // and then bitwise AND the result with 0x0F
-        const uint16_t intermediate_result = packet ^ (packet >> 4) ^ (packet >> 8);
-        crc = (~intermediate_result) & 0x0F;
-    }
-    else
-    {
-        // Unidirectional configuration: XOR the packet with its right-shifted values by 4 and 8 bits,
-        // and then bitwise AND the result with 0x0F
-        crc = (packet ^ (packet >> 4) ^ (packet >> 8)) & 0x0F;
-    }
-
-    // Return the calculated CRC value as a 16-bit unsigned integer
-    return crc;
-}
-
-uint16_t DShotRMT::parseRmtPaket(const dshot_packet_t &dshot_packet)
-{
-    uint16_t parsedRmtPaket = DSHOT_NULL_PACKET;
-    uint16_t crc = calculateCRC(dshot_packet);
-
-    // Complete the paket
-    parsedRmtPaket = (dshot_packet.throttle_value << 1) | dshot_packet.telemetric_request;
-    parsedRmtPaket = (parsedRmtPaket << 4) | crc;
-
-    return parsedRmtPaket;
-}
-
-// Output using ESP32 RMT
-void DShotRMT::sendRmtPaket(const dshot_packet_t &dshot_packet)
-{
-    buildTxRmtItem(parseRmtPaket(dshot_packet));
-
-    rmt_write_items(dshot_tx_rmt_config.channel, dshot_tx_rmt_item, DSHOT_PACKET_LENGTH, false);
+      dShotBits[i] &= ~(this->_pinMask);
+    mask >>= 1;
+  }
+  return _packet;
 }

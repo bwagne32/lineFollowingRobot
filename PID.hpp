@@ -24,9 +24,9 @@ uint16_t position;  // 0-7000
 int output = 0;   // The output value of the controller to be converted to a ratio for turning
 short error = 0;  // Setpoint minus measured value
 // *******************************************
-const float Kp = .75;  //  1 //Proportional constant
-const float Ki = .0001;  //.001 // Integral constant
-const float Kd = 7.5 ;  // 6.5// Derivative constant
+const float Kp = 1.;  //  1 //Proportional constant
+const float Ki = .001;  //.001 // Integral constant
+const float Kd = 7. ;  // 6.5// Derivative constant
 // *******************************************
 bool clamp = 1;     // = 0 if we are not clamping and = 1 if we are clamping
 bool iClamp = 1;        // Prevents integral windup.  If 0 then continue to add to integral
@@ -47,7 +47,6 @@ int calculatedTurnSpeed;
 
 float sensingRatio;
 float turnRatio;
-uint8_t accelerationCounter = 0;
 
 int setpoint = 3500;  // sets target position for controller. Theoretically middle of bot
 
@@ -69,7 +68,6 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right); // Cal
 bool checkIfLost(); // checks sensor values to see if line is lost
                     // Runs inside of calcError();
 float turnCurve(const float& ratio, const uint8_t& speed); // output turn curve
-void updateOutputHelper(motorclass_h::motor &inner, motorclass_h::motor &outer) 
 // Misc ////////////////////////////////////////////////////////////////
 void killSwitch(bool&, motor&, motor&); // Locks program into infinite loop to let us retrieve the bot
 
@@ -122,7 +120,7 @@ void calcPID(motorclass_h::motor &left, motorclass_h::motor &right){ // Runs thr
     output = Kp * error + Ki * iError + Kd * dError;  // Calculate Output Command
 
     // Clamp output from 0 to 255 // For use with integrator clamping
-    if (output > 100 || output < -100) {
+    if (output > 300 || output < -300) {
       clamp = 1;
 
     } else {
@@ -213,21 +211,7 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
     left.speed(motorNominalSpeed);
 
 
-    
     if (output < 0) {
-      updateOutputHelper(right, left);
-    }
-    else if(output < 0){
-       updateOutputHelper(right, left);
-    }
-    else{
-      left.speed(motorNominalSpeed * .9);
-      right.speed(motorNominalSpeed * .9);
-    }
-
-    /*  
-    if (output < 0) {
-
       // if robot is left of line
 
       // Calculate sensing ratio
@@ -236,31 +220,26 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
       turnRatio = 1. - sensingRatio; // 0.-1.
       
-
-
-      if(turnRatio > .5){
+      if(turnRatio > .6){
         right.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
-        accelerationCounter = 0;
+        left.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .65 * motorNominalSpeed));
+        
+        //right.speed(round(right.maxSpeed() * 1 / 2) * turnRatio);
+        //left.speed(left.maxSpeed() * 1 / 2);
       }
-        else if(turnRatio < .1){
-          if(accelerationCounter > 4){
-            left.speed(motorNominalSpeed);
-            right.speed(motorNominalSpeed);
-            accelerationCounter = 0;
-          }
-          else{
-            left.speed(motorNominalSpeed * .75);
-            right.speed(motorNominalSpeed * .75);
-            accelerationCounter++;
-          }
+      /*else if(turnRatio > .7){
+        right.speed(round(right.maxSpeed() * 2 / 3) * turnRatio);
+        left.speed(left.maxSpeed() * 2 / 3);
       }
+      else if(turnRatio > .6){
+        right.speed(round(right.maxSpeed() * 3 / 4) * turnRatio);
+        left.speed(left.maxSpeed() * 3 / 4);
+      }*/
       else{
-        calculatedTurnSpeed = motorNominalSpeed * turnRatio;
+       calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         // set speed of right motor to execute turn
         right.speed(calculatedTurnSpeed);
-        accelerationCounter = 0;
-      }
+        }
 
     } else if (output > 0) {
       // if robot is right of line
@@ -272,39 +251,33 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       turnRatio = 1. - sensingRatio;
       
 
-      if(turnRatio > .5){
+      if(turnRatio > .6){
         left.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
-        accelerationCounter = 0;
+        right.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .65 * motorNominalSpeed));
+        
+        //left.speed(round(left.maxSpeed() * 1 / 2) * turnRatio);
+        //right.speed(right.maxSpeed() * 1 / 2);
       }
-      else if(turnRatio < .1){
-         if(accelerationCounter > 4){
-            left.speed(motorNominalSpeed);
-            right.speed(motorNominalSpeed);
-            accelerationCounter = 0;
-          }
-          else{
-            left.speed(motorNominalSpeed * .75);
-            right.speed(motorNominalSpeed * .75);
-            accelerationCounter++;
-          }
+      /*else if(turnRatio > .7){
+        left.speed(round(left.maxSpeed() * 2 / 3) * turnRatio);
+        right.speed(right.maxSpeed() * 2 / 3);
       }
+      else if(turnRatio > .6){
+        left.speed(round(left.maxSpeed() * 3 / 4) * turnRatio);
+        right.speed(right.maxSpeed() * 3 / 4);
+      }*/
       else{
         calculatedTurnSpeed = motorNominalSpeed * turnRatio;
         //Serial.println(turnRatio);
         // set speed of left motor to execute turn
         left.speed(calculatedTurnSpeed);
-        accelerationCounter = 0;
       }
-
-      
-    } 
-    else{
-      left.speed(motorNominalSpeed * .9);
-      right.speed(motorNominalSpeed * .9);
+    } else{
+      left.speed(motorNominalSpeed * .7);
+      right.speed(motorNominalSpeed * .7);
     }
 
-*/
+
     // Output to drive
 
     right.outputToDrive();
@@ -322,46 +295,11 @@ bool checkIfLost(){
           (sensorValues[7]>=980)); };
 
 float turnCurve(const float& ratio, const uint8_t& speed){
-  //-2.4 * maxSpeed * (sin(x)^4 / x) + maxSpeed
-  return - speed * ratio * ratio + speed;
-  //return -2.4 * speed * sin(ratio) * sin(ratio) * sin(ratio) * sin(ratio) / ratio + speed; // I can't be bothed to use exponents
+    return 1.3 * speed * sin(5 * ratio - .5) / (2 * ratio) + .1 * speed;
+
+  //return .9 * speed * sin(5 * ratio - 1) / (2 * ratio) + .1 * speed;
 }
 
-void updateOutputHelper(motorclass_h::motor &inner, motorclass_h::motor &outer){
-  // if robot is left of line
-
-      // Calculate sensing ratio
-      sensingRatio = (-1 * output) / 1000.;
-
-      // calculate turn speed , calculate turn ratio, and truncate data to 8 bit integer
-      turnRatio = 1. - sensingRatio; // 0.-1.
-      
-
-
-      if(turnRatio > .5){
-        inner.speed(int(turnCurve(turnRatio, motorNominalSpeed)));
-        outer.speed(int(turnCurve(turnRatio, motorNominalSpeed) + .3 * motorNominalSpeed));
-        accelerationCounter = 0;
-      }
-        else if(turnRatio < .1){
-          if(accelerationCounter > 4){
-            outer.speed(motorNominalSpeed);
-            inner.speed(motorNominalSpeed);
-            accelerationCounter = 0;
-          }
-          else{
-            outer.speed(motorNominalSpeed * .75);
-            inner.speed(motorNominalSpeed * .75);
-            accelerationCounter++;
-          }
-      }
-      else{
-        calculatedTurnSpeed = motorNominalSpeed * turnRatio;
-        // set speed of right motor to execute turn
-        inner.speed(calculatedTurnSpeed);
-        accelerationCounter = 0;
-      }
-}
 
 void killSwitch(bool &stop, motor &left, motor &right) {
   while (stop) {  // There's some infinite loop protection so I have to fight it like this
