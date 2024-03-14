@@ -13,8 +13,8 @@ e.g.
 */
 DShot esc1(DShot::Mode::DSHOT150);
 
-uint16_t throttle = 600;
-uint16_t target = 100;
+uint16_t throttle = 1500;
+uint16_t target = 600;
 const uint8_t escEnable = 5;
 const uint8_t escPin = 7;
 //const uint8_t enableControl = 8;
@@ -23,6 +23,8 @@ const uint8_t escPin = 7;
 void setup() {
   //Serial.begin(9600);
   pinMode(escEnable, OUTPUT);
+  digitalWrite(escEnable, LOW);
+  delay(5000);
   digitalWrite(escEnable, HIGH);
   // Notice, all pins must be connected to same PORT
   esc1.attach(escPin);  
@@ -57,5 +59,5 @@ void loop() {
       esc1.setThrottle(throttle);
     }
   }*/
-  delay(10000);
+  delay(100);
 }
