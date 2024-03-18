@@ -50,8 +50,10 @@ void motor::speed(int desiredSpeed){
   // funciton sets the desired PWM value
 
   uint8_t cappedSpeed; // Value within arduino PWM range;
-
-  if(desiredSpeed > maxSpeed_){
+  if(desiredSpeed == 255){
+    cappedSpeed = 255;
+  }
+  else if(desiredSpeed > maxSpeed_){
     // check for overflow
 
     cappedSpeed = maxSpeed_;

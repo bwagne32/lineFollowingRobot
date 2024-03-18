@@ -10,12 +10,12 @@
 #include "motorclass.hpp"
 #include "comms.hpp"
 #include "PID.hpp"
-#include "DShotRMT.h"
+//#include "DShotRMT.h"
 
 #include <QTRSensors.h>
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
+//#include <BLEDevice.h>
+//#include <BLEUtils.h>
+//#include <BLEServer.h>
 
 #include <esp_task_wdt.h>
 
@@ -36,7 +36,7 @@ motorclass_h::motor right(rightWheelPin1, rightWheelPin2, rightPWMpin, maxMotorS
 // Dshot //////////////////////////////////////////////////////////////////////////////////////////////////
 const uint8_t fanPin = 12;
 const uint8_t fanEnablePin = 8;
-const auto DSHOT_MODE = DSHOT300;
+//const auto DSHOT_MODE = DSHOT300;
 const auto FAILSAFE_THROTTLE = 999;
 const auto INITIAL_THROTTLE = 48;
 
@@ -47,7 +47,7 @@ const auto INITIAL_THROTTLE = 48;
 //short output = 0;
 bool stop = false;
 
-
+/*
 // BLE stuff ////////////////////////////////////////////////////////////////////////////////
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
@@ -70,6 +70,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       }
     }
 };
+*/
 
 void setup() {
   //motorclass_h::motor_calibration leftCalibrate(leftWheelPin1, leftWheelPin2, leftPWMpin);
@@ -77,7 +78,7 @@ void setup() {
 
   //Serial.begin(9600);
   // BLE ////////////////////////////////////////////////////////////////////////////////
-  
+  /*
   BLEDevice::init("MyESP32");
   BLEServer *pServer = BLEDevice::createServer();
 
@@ -96,7 +97,7 @@ void setup() {
 
   BLEAdvertising *pAdvertising = pServer->getAdvertising();
   pAdvertising->start();
-
+*/
   // Motors ////////////////////////////////////////////////////////////////////////////////
   pinMode(leftWheelPin1, OUTPUT);
   pinMode(leftWheelPin2, OUTPUT);
@@ -134,7 +135,7 @@ void setup() {
   /*for (uint16_t i = 0; i < 400; i++){
     qtr.calibrate();
   }*/
-  for (uint16_t i = 0; i < 200; i++)
+  for (uint16_t i = 0; i < 100; i++)
   {
     //leftCalibrate.drive(50);
     //rightCalibrate.drive(-50);

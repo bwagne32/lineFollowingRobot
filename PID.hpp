@@ -1,3 +1,4 @@
+#include "esp32-hal.h"
 #include <stdint.h>
 #include "Arduino.h"
 #include <cmath>
@@ -36,9 +37,9 @@ float dError = 0;
 float prevError1 = 0;
 float prevError2 = 0;
 
-int currentTime = 0;
+int currentTime = 500;
 int previousTime = 0;
-float timeDiff = 3;
+float timeDiff = 1;
 
 // Line follower Motor Control **************************************************************************************
 
@@ -53,10 +54,10 @@ int setpoint = 3500;  // sets target position for controller. Theoretically midd
 
 //ACCEL STUFF
 unsigned long turnTime_ACC;
-int turnTime_PRE = 250;
+int turnTime_PRE = 350;
 bool accelONS;
 unsigned long accelTime_ACC;
-int accelTime_PRE = 500;
+int accelTime_PRE = 100; // acceleration time
 bool longStraight;
 bool okToAccel;
 
@@ -287,8 +288,8 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
       right.speed(motorNominalSpeed);
     }
 
-
-    if(turnRatio > .3){ // Going Through Turns
+/*
+    if(turnRatio > .6){ // Going Through Turns
       turnTime_ACC = currentTime;
       accelONS = true;
     }else if(accelONS && longStraight){ //Start Accel Timer
@@ -300,10 +301,10 @@ void updateOutput(motorclass_h::motor &left, motorclass_h::motor &right){
     okToAccel = (currentTime - accelTime_ACC < accelTime_PRE);
  
     if (longStraight && okToAccel ){ // Accelerating
-        left.speed(motorNominalSpeed);
-        right.speed(motorNominalSpeed);
+        left.speed(255);
+        right.speed(255);
     }
-
+*/
 
     // Output to drive
 
